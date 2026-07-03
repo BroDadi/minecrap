@@ -87,7 +87,7 @@ namespace minecrap
             KeyboardState input = KeyboardState;
             base.OnUpdateFrame(args);
             cam.Update(mouse, args);
-            player.Update(input, args);
+            player.Update(input, mouse, args);
         }
     }
 }

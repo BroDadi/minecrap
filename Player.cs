@@ -12,6 +12,11 @@ namespace minecrap
         private float gravity = 20f;
         private float jumpForce = 7f;
         private bool onGround;
+        private bool lmbDown;
+        private bool rmbDown;
+        private float reach = 5f;
+        private BlockType[] blocks;
+        private int selected;
         public Vector3 pos;
         public Collider collider;
         public static Player instance;
@@ -21,6 +26,8 @@ namespace minecrap
             this.pos = pos;
             collider = new Collider(pos, new Vector3(0.6f, 1.8f, 0.6f));
             instance = this;
+            blocks = new BlockType[] { BlockType.Dirt, BlockType.Grass, BlockType.Stone };
+            selected = 0;
         }
 
         public void Update(KeyboardState input, MouseState mouse, FrameEventArgs e)
@@ -30,6 +37,35 @@ namespace minecrap
 
         private void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
+            if (mouse.IsButtonDown(MouseButton.Left))
+            {
+                if (!lmbDown)
+                {
+                    Block? block = RayCast.RayCastedBlock(Camera.instance.pos, Camera.instance.front, reach);
+                    if (block != null) World.instance.SetBlock((Vector3i)block.pos, BlockType.Air);
+                    lmbDown = true;
+                }
+            }
+            else lmbDown = false;
+
+            if (mouse.IsButtonDown(MouseButton.Right))
+            {
+                if (!rmbDown)
+                {
+                    Block? block = RayCast.PlaceOnBlock(Camera.instance.pos, Camera.instance.front, reach);
+                    if (block != null && !collider.Intersects(block.collider))
+                    {
+                        World.instance.SetBlock((Vector3i)block.pos, blocks[selected]);
+                    }
+                    rmbDown = true;
+                }
+            }
+            else rmbDown = false;
+
+            if (input.IsKeyDown(Keys.D1)) selected = 0;
+            if (input.IsKeyDown(Keys.D2)) selected = 1;
+            if (input.IsKeyDown(Keys.D3)) selected = 2;
+
             float deltaTime = (float)e.Time;
             Vector3 move = Vector3.Zero;
             Vector3 front = Camera.instance.front;

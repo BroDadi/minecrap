@@ -55,31 +55,6 @@ namespace minecrap
 
         private void InputController(MouseState mouse, FrameEventArgs e)
         {
-            if (mouse.IsButtonDown(MouseButton.Left))
-            {
-                if (!lmbDown)
-                {
-                    Block? block = RayCast.RayCastedBlock(pos, front, reach);
-                    if (block != null) World.instance.SetBlock((Vector3i)block.pos, BlockType.Air);
-                    lmbDown = true;
-                }
-            }
-            else lmbDown = false;
-
-            if (mouse.IsButtonDown(MouseButton.Right))
-            {
-                if (!rmbDown)
-                {
-                    Block? block = RayCast.PlaceOnBlock(pos, front, reach);
-                    if (block != null && !Player.instance.collider.Intersects(block.collider))
-                    {
-                        World.instance.SetBlock((Vector3i)block.pos, BlockType.Dirt);
-                    }
-                    rmbDown = true;
-                }
-            }
-            else rmbDown = false;
-
             if (firstMove)
             {
                 lastPos = new Vector2(mouse.X, mouse.Y);
