@@ -1,0 +1,109 @@
+using minecrap.world;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+
+namespace minecrap
+{
+    internal class Camera
+    {
+        private float width;
+        private float height;
+        private float sens = 0.25f;
+        public Vector3 pos;
+        public Vector3 right = Vector3.UnitX;
+        public Vector3 up = Vector3.UnitY;
+        public Vector3 front = -Vector3.UnitZ;
+        private float pitch;
+        private float yaw = -90;
+        private bool firstMove = true;
+        private bool lmbDown = false;
+        private bool rmbDown = false;
+        private float reach = 5;
+        public Vector2 lastPos;
+        public static Camera instance;
+
+        public Camera(float width, float height, Vector3 pos)
+        {
+            this.width = width;
+            this.height = height;
+            this.pos = pos;
+            instance = this;
+        }
+
+        public Matrix4 GetViewMatrix()
+        {
+            return Matrix4.LookAt(pos, pos + front, up);
+        }
+
+        public Matrix4 GetProjectionMatrix()
+        {
+            return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), width / height, 0.1f, 1024);
+        }
+
+        private void UpdateVectors()
+        {
+            if (pitch > 89.99f) pitch = 89.99f;
+            else if (pitch < -89.99f) pitch = -89.99f;
+            front.X = MathF.Cos(MathHelper.DegreesToRadians(pitch)) * MathF.Cos(MathHelper.DegreesToRadians(yaw));
+            front.Y = MathF.Sin(MathHelper.DegreesToRadians(pitch));
+            front.Z = MathF.Cos(MathHelper.DegreesToRadians(pitch)) * MathF.Sin(MathHelper.DegreesToRadians(yaw));
+            front = Vector3.Normalize(front);
+            right = Vector3.Normalize(Vector3.Cross(front, Vector3.UnitY));
+            up = Vector3.Normalize(Vector3.Cross(right, front));
+        }
+
+        private void InputController(MouseState mouse, FrameEventArgs e)
+        {
+            if (mouse.IsButtonDown(MouseButton.Left))
+            {
+                if (!lmbDown)
+                {
+                    Block? block = RayCast.RayCastedBlock(pos, front, reach);
+                    if (block != null) World.instance.SetBlock((Vector3i)block.pos, BlockType.Air);
+                    lmbDown = true;
+                }
+            }
+            else lmbDown = false;
+
+            if (mouse.IsButtonDown(MouseButton.Right))
+            {
+                if (!rmbDown)
+                {
+                    Block? block = RayCast.PlaceOnBlock(pos, front, reach);
+                    if (block != null && !Player.instance.collider.Intersects(block.collider))
+                    {
+                        World.instance.SetBlock((Vector3i)block.pos, BlockType.Dirt);
+                    }
+                    rmbDown = true;
+                }
+            }
+            else rmbDown = false;
+
+            if (firstMove)
+            {
+                lastPos = new Vector2(mouse.X, mouse.Y);
+                firstMove = false;
+            }
+            else
+            {
+                Vector2 delta = new(mouse.X - lastPos.X, mouse.Y - lastPos.Y);
+                lastPos = new Vector2(mouse.X, mouse.Y);
+                yaw += delta.X * sens;
+                pitch -= delta.Y * sens;
+            }
+            UpdateVectors();
+        }
+
+        public void Update(MouseState mouse, FrameEventArgs e)
+        {
+            InputController(mouse, e);
+        }
+
+        public void SetSize(int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+        }
+    }
+}
