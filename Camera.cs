@@ -17,9 +17,6 @@ namespace minecrap
         private float pitch;
         private float yaw = -90;
         private bool firstMove = true;
-        private bool lmbDown = false;
-        private bool rmbDown = false;
-        private float reach = 5;
         public Vector2 lastPos;
         public static Camera instance;
 
