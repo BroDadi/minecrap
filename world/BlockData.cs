@@ -7,7 +7,8 @@ namespace minecrap.world
         Air,
         Dirt,
         Grass,
-        Stone
+        Stone,
+        Cobblestone
     }
 
     public enum Faces
