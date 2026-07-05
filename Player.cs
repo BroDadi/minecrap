@@ -11,10 +11,8 @@ namespace minecrap
         private float speedY = 0f;
         private float gravity = 20f;
         private float jumpForce = 7f;
-        private bool onGround;
-        private bool lmbDown;
-        private bool rmbDown;
         private float reach = 5f;
+        private bool onGround, lmbDown, rmbDown, rDown, escDown;
         private BlockType[] blocks;
         private int selected;
         public Vector3 pos;
@@ -62,9 +60,31 @@ namespace minecrap
             }
             else rmbDown = false;
 
-            if (input.IsKeyDown(Keys.D1)) selected = 0;
-            if (input.IsKeyDown(Keys.D2)) selected = 1;
-            if (input.IsKeyDown(Keys.D3)) selected = 2;
+            if (input.IsKeyDown(Keys.R))
+            {
+                if (!rDown)
+                {
+                    Random rand = new();
+                    pos = new Vector3(rand.Next(0, World.instance.worldSize.X * World.chunkSize), 64, rand.Next(0, World.instance.worldSize.Y * World.chunkSize));
+                }
+                rDown = true;
+            }
+            else rDown = false;
+
+            if (input.IsKeyDown(Keys.Escape))
+            {
+                if (!escDown)
+                {
+                    if (Game.instance.CursorState == CursorState.Grabbed) Game.instance.CursorState = CursorState.Normal;
+                    else Game.instance.CursorState = CursorState.Grabbed;
+                }
+                escDown = true;
+            }
+            else escDown = false;
+
+            if (input.IsKeyDown(Keys.D1)) SelectBlock(0);
+            if (input.IsKeyDown(Keys.D2)) SelectBlock(1);
+            if (input.IsKeyDown(Keys.D3)) SelectBlock(2);
 
             float deltaTime = (float)e.Time;
             Vector3 move = Vector3.Zero;
@@ -119,6 +139,12 @@ namespace minecrap
                 }
             }
             return false;
+        }
+
+        private void SelectBlock(int num)
+        {
+            selected = num;
+            Game.instance.block.SetBlockType(blocks[selected]);
         }
     }
 }

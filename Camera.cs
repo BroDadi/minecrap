@@ -1,4 +1,3 @@
-using minecrap.world;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -7,8 +6,6 @@ namespace minecrap
 {
     internal class Camera
     {
-        private float width;
-        private float height;
         private float sens = 0.25f;
         public Vector3 pos;
         public Vector3 right = Vector3.UnitX;
@@ -20,10 +17,8 @@ namespace minecrap
         public Vector2 lastPos;
         public static Camera instance;
 
-        public Camera(float width, float height, Vector3 pos)
+        public Camera(Vector3 pos)
         {
-            this.width = width;
-            this.height = height;
             this.pos = pos;
             instance = this;
         }
@@ -35,7 +30,7 @@ namespace minecrap
 
         public Matrix4 GetProjectionMatrix()
         {
-            return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), width / height, 0.1f, 1024);
+            return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), (float)Game.instance.width / Game.instance.height, 0.1f, 1024);
         }
 
         private void UpdateVectors()
@@ -70,12 +65,6 @@ namespace minecrap
         public void Update(MouseState mouse, FrameEventArgs e)
         {
             InputController(mouse, e);
-        }
-
-        public void SetSize(int width, int height)
-        {
-            this.width = width;
-            this.height = height;
         }
     }
 }
