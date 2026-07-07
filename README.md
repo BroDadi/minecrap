@@ -5,5 +5,5 @@ includes:
 * a PLAYER with COLLISIONS
 * a CAMERA
 * a GUI
-* a 16x16 chunk world with terrain generation (it's just basic noise that i didn't even edit it's just from the tutorial)
-* a whopping FOUR (4) types of blocks (or FIVE (5) if you include air!)
+* a 16x16 chunk world with basic terrain generation
+* a whopping SIX (6) types of blocks (or SEVEN (7) if you include air!)
