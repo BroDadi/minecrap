@@ -8,7 +8,7 @@ namespace minecrap.gui
     {
         private Texture texture;
 
-        public UIImage(Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, Texture texture, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None)
+        public UIImage(Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, Texture texture, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null)
         {
             this.relSize = relSize;
             this.offSize = offSize;
@@ -17,6 +17,7 @@ namespace minecrap.gui
             this.texture = texture;
             this.aspectRatio = aspectRatio;
             this.dominantAxis = dominantAxis;
+            this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
         }
 
         public override void GenElement()

@@ -13,7 +13,7 @@ namespace minecrap.world
             {
                 temp += normalizedDir * step;
                 Block? block = World.instance.GetBlock(new Vector3i((int)Math.Round(temp.X), (int)Math.Round(temp.Y), (int)Math.Round(temp.Z)));
-                if (block != null && block.blockType != BlockType.Air) return block;
+                if (block != null && block.blockType != BlockType.Air && block.blockType != BlockType.Water) return block;
             }
             return null;
         }
@@ -31,7 +31,7 @@ namespace minecrap.world
                 Block? block = World.instance.GetBlock(new Vector3i((int)Math.Round(temp.X), (int)Math.Round(temp.Y), (int)Math.Round(temp.Z)));
                 if (block != null)
                 {
-                    if (block.blockType != BlockType.Air) return lastBlock;
+                    if (block.blockType != BlockType.Air && block.blockType != BlockType.Water) return lastBlock;
                     else lastBlock = block;
                 }
             }

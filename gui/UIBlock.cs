@@ -12,7 +12,7 @@ namespace minecrap.gui
         private Dictionary<Faces, List<Vector2>> textures;
         private Texture texture;
 
-        public UIBlock(BlockType blockType, Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None)
+        public UIBlock(BlockType blockType, Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null)
         {
             texture = new Texture("textures");
             textures = TextureData.blockTypeTextures[blockType];
@@ -22,6 +22,7 @@ namespace minecrap.gui
             this.offPos = offPos;
             this.aspectRatio = aspectRatio;
             this.dominantAxis = dominantAxis;
+            this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
             SetBlockType(blockType);
         }
 

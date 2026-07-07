@@ -24,7 +24,7 @@ namespace minecrap
             this.pos = pos;
             collider = new Collider(pos, new Vector3(0.6f, 1.8f, 0.6f));
             instance = this;
-            blocks = new BlockType[] { BlockType.Dirt, BlockType.Grass, BlockType.Stone };
+            blocks = new BlockType[] { BlockType.Dirt, BlockType.Grass, BlockType.Stone, BlockType.Cobblestone, BlockType.Glass };
             selected = 0;
         }
 
@@ -51,7 +51,7 @@ namespace minecrap
                 if (!rmbDown)
                 {
                     Block? block = RayCast.PlaceOnBlock(Camera.instance.pos, Camera.instance.front, reach);
-                    if (block != null && !collider.Intersects(block.collider))
+                    if (block != null && !collider.Intersects(block.GetCollider()))
                     {
                         World.instance.SetBlock((Vector3i)block.pos, blocks[selected]);
                     }
@@ -66,6 +66,7 @@ namespace minecrap
                 {
                     Random rand = new();
                     pos = new Vector3(rand.Next(0, World.instance.worldSize.X * World.chunkSize), 64, rand.Next(0, World.instance.worldSize.Y * World.chunkSize));
+                    speedY = 0;
                 }
                 rDown = true;
             }
@@ -85,6 +86,8 @@ namespace minecrap
             if (input.IsKeyDown(Keys.D1)) SelectBlock(0);
             if (input.IsKeyDown(Keys.D2)) SelectBlock(1);
             if (input.IsKeyDown(Keys.D3)) SelectBlock(2);
+            if (input.IsKeyDown(Keys.D4)) SelectBlock(3);
+            if (input.IsKeyDown(Keys.D5)) SelectBlock(4);
 
             float deltaTime = (float)e.Time;
             Vector3 move = Vector3.Zero;
@@ -133,7 +136,7 @@ namespace minecrap
             Collider coll = new(position, collider.size);
             foreach (Block block in World.instance.GetBlocksAroundCollider(coll))
             {
-                if (coll.Intersects(block.collider))
+                if (coll.Intersects(block.GetCollider()))
                 {
                     return true;
                 }

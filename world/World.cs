@@ -12,7 +12,17 @@ namespace minecrap.world
         public static World instance;
         public Vector2i worldSize;
         public const int chunkSize = 16;
-        public const int height = 64;
+        public const int height = 96;
+        public const int seaLevel = 35;
+        public static HashSet<BlockType> transparentBlocks = new()
+        {
+            BlockType.Water,
+        };
+
+        public static HashSet<BlockType> cutoutBlocks = new()
+        {
+            BlockType.Glass,
+        };
         
         public World(int seed, ShaderProgram shaderProgram)
         {
@@ -49,7 +59,11 @@ namespace minecrap.world
             texture.Bind();
             foreach (Chunk chunk in chunks)
             {
-                chunk.Render(shaderProgram);
+                chunk.RenderNormal(shaderProgram);
+            }
+            foreach (Chunk chunk in chunks)
+            {
+                chunk.RenderTransparent(shaderProgram);
             }
         }
 
@@ -85,8 +99,8 @@ namespace minecrap.world
                 {
                     for (int z = (int)Math.Floor(collider.pos.Z - collider.size.Z / 2); z <= (int)Math.Ceiling(collider.pos.Z + collider.size.Z / 2); z++)
                     {
-                        Block block = GetBlock(new Vector3i(x, y, z));
-                        if (block != null && block.blockType != BlockType.Air) blocks.Add(block);
+                        Block? block = GetBlock(new Vector3i(x, y, z));
+                        if (block != null && block.blockType != BlockType.Air && block.blockType != BlockType.Water) blocks.Add(block);
                     }
                 }
             }

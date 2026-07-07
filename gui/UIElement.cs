@@ -5,7 +5,7 @@ namespace minecrap.gui
 {
     internal abstract class UIElement
     {
-        public Vector2 relSize, offSize, relPos, offPos;
+        public Vector2 relSize, offSize, relPos, offPos, pivotPoint;
         protected VAO vao;
         protected VBO vbo, textureVBO;
         protected EBO ebo;
@@ -14,7 +14,11 @@ namespace minecrap.gui
 
         public abstract void GenElement();
         public abstract void Render(ShaderProgram shaderProgram);
-        protected Vector2 CalculatePos() => relPos + new Vector2(offPos.X / Game.instance.width, offPos.Y / Game.instance.height);
+        protected Vector2 CalculatePos()
+        {
+            Vector2 size = CalculateSize();
+            return relPos - size * (pivotPoint - new Vector2(0.5f, 0.5f)) + new Vector2(offPos.X / Game.instance.width, offPos.Y / Game.instance.height);
+        }
         protected Vector2 CalculateSize()
         {
             float width, height;

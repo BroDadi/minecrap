@@ -56,6 +56,33 @@ namespace minecrap.world
                 [Faces.Right] = textures[3, 0],
                 [Faces.Top] = textures[3, 0],
                 [Faces.Bottom] = textures[3, 0],
+            },
+            [BlockType.Cobblestone] = new Dictionary<Faces, List<Vector2>>()
+            {
+                [Faces.Front] = textures[4, 0],
+                [Faces.Back] = textures[4, 0],
+                [Faces.Left] = textures[4, 0],
+                [Faces.Right] = textures[4, 0],
+                [Faces.Top] = textures[4, 0],
+                [Faces.Bottom] = textures[4, 0],
+            },
+            [BlockType.Water] = new Dictionary<Faces, List<Vector2>>()
+            {
+                [Faces.Front] = textures[5, 0],
+                [Faces.Back] = textures[5, 0],
+                [Faces.Left] = textures[5, 0],
+                [Faces.Right] = textures[5, 0],
+                [Faces.Top] = textures[5, 0],
+                [Faces.Bottom] = textures[5, 0],
+            },
+            [BlockType.Glass] = new Dictionary<Faces, List<Vector2>>()
+            {
+                [Faces.Front] = textures[6, 0],
+                [Faces.Back] = textures[6, 0],
+                [Faces.Left] = textures[6, 0],
+                [Faces.Right] = textures[6, 0],
+                [Faces.Top] = textures[6, 0],
+                [Faces.Bottom] = textures[6, 0],
             }
         };
     }

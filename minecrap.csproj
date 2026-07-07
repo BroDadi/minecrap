@@ -8,7 +8,7 @@
   <ItemGroup>
     <PackageReference Include="StbImageSharp" Version="*"/>
     <PackageReference Include="OpenTK" Version="*"/>
-    <PackageReference Include="SimplexNoise" Version="*"/>
+    <PackageReference Include="Udun.FastNoiseLite" Version="*"/>
   </ItemGroup>
   <ItemGroup>
     <Content Include="textures\**\*">

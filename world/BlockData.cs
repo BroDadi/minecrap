@@ -8,7 +8,9 @@ namespace minecrap.world
         Dirt,
         Grass,
         Stone,
-        Cobblestone
+        Cobblestone,
+        Water,
+        Glass,
     }
 
     public enum Faces
@@ -20,6 +22,7 @@ namespace minecrap.world
         Top,
         Bottom
     }
+
 
     public struct FaceData
     {

@@ -58,11 +58,11 @@ namespace minecrap
             gui = new GUI();
             UIImage image = new(new Vector2(0.025f, 0.025f), Vector2.Zero, new Vector2(0.5f, 0.5f), Vector2.Zero, new Texture("crosshair"), 1f, DomAxis.Height);
             gui.AddToGUI(image);
-            block = new(BlockType.Dirt, Vector2.Zero, new Vector2(150, 150), new Vector2(1f, 1f), new Vector2(-85, -85), 1f, DomAxis.Height);
+            block = new(BlockType.Dirt, new Vector2(0.2f, 0.2f), Vector2.Zero, new Vector2(1f, 1f), new Vector2(-10f, -10f), 1f, DomAxis.Height, new Vector2(1f, 1f));
             gui.AddToGUI(block);
 
             Vector3 spawnPos = new(worldSize.X * 8, 64, worldSize.Y * 8);
-            cam = new Camera(spawnPos + new Vector3(0, 0.5f, 0));
+            cam = new Camera(spawnPos + new Vector3(0f, 0.5f, 0f));
             player = new Player(spawnPos);
 
             CursorState = CursorState.Grabbed;

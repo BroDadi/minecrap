@@ -14,7 +14,6 @@ namespace minecrap.world
         {
             this.pos = pos;
             this.chunk = chunk;
-            collider = new(pos, Vector3.One);
             SetBlockType(blockType);
         }
 
@@ -42,6 +41,11 @@ namespace minecrap.world
                 texCoords = textures[face],
             };
             return faceData;
+        }
+
+        public Collider GetCollider()
+        {
+            return new Collider(pos, Vector3.One);
         }
     }
 }
