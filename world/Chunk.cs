@@ -29,15 +29,6 @@ namespace minecrap.world
         private World world;
         private FastNoiseLite noise;
         public Block[,,] chunkBlocks;
-        private static Dictionary<Faces, Vector3i> neighborByFace = new()
-        {
-            [Faces.Front] = new Vector3i(0, 0, 1),
-            [Faces.Back] = new Vector3i(0, 0, -1),
-            [Faces.Left] = new Vector3i(-1, 0, 0),
-            [Faces.Right] = new Vector3i(1, 0, 0),
-            [Faces.Top] = new Vector3i(0, 1, 0),
-            [Faces.Bottom] = new Vector3i(0, -1, 0),
-        };
 
         public Chunk(Vector2i chunkPos, int seed)
         {
@@ -122,7 +113,7 @@ namespace minecrap.world
                         }
                         else if (y <= World.seaLevel) type = BlockType.Water;
 
-                        chunkBlocks[x, y, z] = new Block(new Vector3(x + blockOffset.X, y, z + blockOffset.Z), this, type);
+                        chunkBlocks[x, y, z] = new Block(new Vector3i(x + blockOffset.X, y, z + blockOffset.Z), this, type);
                     }
                 }
             }
@@ -266,7 +257,7 @@ namespace minecrap.world
         private bool CanRender(Faces face, Vector3i pos)
         {
             Block? block = World.instance.GetBlock(pos + blockOffset);
-            Block? neighbor = World.instance.GetBlock(pos + blockOffset + neighborByFace[face]);
+            Block? neighbor = World.instance.GetNeighbor(block, face);
             return block != null && block.blockType != BlockType.Air &&
                     (neighbor == null || neighbor.blockType == BlockType.Air ||
                     ((World.transparentBlocks.Contains(neighbor.blockType) || World.cutoutBlocks.Contains(neighbor.blockType)) && block.blockType != neighbor.blockType));

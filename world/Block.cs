@@ -4,16 +4,18 @@ namespace minecrap.world
 {
     internal class Block
     {
-        public Vector3 pos;
+        public Vector3i pos;
         public BlockType blockType;
         private Dictionary<Faces, List<Vector2>> textures;
         public Collider collider;
         public Chunk chunk;
+        public ulong lastUpdate;
 
-        public Block(Vector3 pos, Chunk chunk, BlockType blockType = BlockType.Air)
+        public Block(Vector3i pos, Chunk chunk, BlockType blockType = BlockType.Air)
         {
             this.pos = pos;
             this.chunk = chunk;
+            lastUpdate = 0;
             SetBlockType(blockType);
         }
 

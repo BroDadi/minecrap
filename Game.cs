@@ -110,6 +110,7 @@ namespace minecrap
             base.OnUpdateFrame(args);
             cam.Update(mouse, args);
             player.Update(input, mouse, args);
+            world.Update(args);
         }
     }
 }
