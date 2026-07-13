@@ -8,7 +8,7 @@ namespace minecrap.gui
     {
         private Texture texture;
 
-        public UIImage(Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, Texture texture, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null)
+        public UIImage(Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, Texture texture, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color4? color = null)
         {
             this.relSize = relSize;
             this.offSize = offSize;
@@ -18,6 +18,7 @@ namespace minecrap.gui
             this.aspectRatio = aspectRatio;
             this.dominantAxis = dominantAxis;
             this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
+            this.color = color ?? Color4.White;
         }
 
         public override void GenElement()
@@ -47,6 +48,9 @@ namespace minecrap.gui
             textureVBO.Bind();
             vao.LinkToVAO(1, 2, textureVBO);
 
+            colorVBO = new VBO(new List<Color4>() { color, color, color, color });
+            vao.LinkToVAO(2, 4, colorVBO);
+
             ebo = new EBO(new List<uint>() { 0, 1, 2, 2, 3, 0 });
             ebo.Bind();
         }
@@ -58,14 +62,6 @@ namespace minecrap.gui
             vao.Bind();
             ebo.Bind();
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
-        }
-
-        public void Delete()
-        {
-            vao.Delete();
-            vbo.Delete();
-            textureVBO.Delete();
-            ebo.Delete();
         }
     }
 }

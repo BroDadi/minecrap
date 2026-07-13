@@ -7,6 +7,7 @@ namespace minecrap.graphics
     internal class VBO
     {
         public int ID;
+        private int color4Size = Marshal.SizeOf<Color4>();
 
         public VBO(List<Vector3> data)
         {
@@ -22,6 +23,14 @@ namespace minecrap.graphics
             ID = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
             GL.BufferData(BufferTarget.ArrayBuffer, data.Count * Vector2.SizeInBytes, ref dataSpan[0], BufferUsageHint.StaticDraw);
+        }
+
+        public VBO(List<Color4> data)
+        {
+            Span<Color4> dataSpan = CollectionsMarshal.AsSpan(data);
+            ID = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
+            GL.BufferData(BufferTarget.ArrayBuffer, data.Count * color4Size, ref dataSpan[0], BufferUsageHint.StaticDraw);
         }
 
         public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, ID);

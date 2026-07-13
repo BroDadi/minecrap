@@ -83,7 +83,25 @@ namespace minecrap.world
                 [Faces.Right] = textures[6, 0],
                 [Faces.Top] = textures[6, 0],
                 [Faces.Bottom] = textures[6, 0],
-            }
+            },
+            [BlockType.Sand] = new Dictionary<Faces, List<Vector2>>()
+            {
+                [Faces.Front] = textures[7, 0],
+                [Faces.Back] = textures[7, 0],
+                [Faces.Left] = textures[7, 0],
+                [Faces.Right] = textures[7, 0],
+                [Faces.Top] = textures[7, 0],
+                [Faces.Bottom] = textures[7, 0],
+            },
+        };
+
+        public static readonly Dictionary<BlockType, List<Vector2>> customTextures = new()
+        {
+            [BlockType.Sapling] =
+            [
+                .. textures[0, 15],
+                .. textures[0, 15]
+            ]
         };
     }
 }

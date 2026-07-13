@@ -30,7 +30,7 @@ namespace minecrap
 
         public Matrix4 GetProjectionMatrix()
         {
-            return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), (float)Game.instance.width / Game.instance.height, 0.1f, 1024);
+            return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60), (float)Game.instance.width / Game.instance.height, 0.1f, 128);
         }
 
         private void UpdateVectors()

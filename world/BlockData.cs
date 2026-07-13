@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace minecrap.world
 {
-    public enum BlockType
+    internal enum BlockType
     {
         Air,
         Dirt,
@@ -11,9 +11,11 @@ namespace minecrap.world
         Cobblestone,
         Water,
         Glass,
+        Sand,
+        Sapling,
     }
 
-    public enum Faces
+    internal enum Faces
     {
         Front,
         Back,
@@ -23,14 +25,15 @@ namespace minecrap.world
         Bottom
     }
 
-
-    public struct FaceData
+    internal struct FaceData
     {
         public List<Vector3> vertexes;
-        public List<Vector2> texCoords;
+        public List<Vector2> texCoords; 
+        public List<Color4> colors;
+        public bool twoSided;
     };
 
-    public struct RawFaceData
+    internal struct RawFaceData
     {
         public static readonly Dictionary<Faces, List<Vector3>> rawVertexData = new()
         {

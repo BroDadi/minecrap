@@ -14,21 +14,19 @@ namespace minecrap.world
         public Vector2i worldSize;
         public const int chunkSize = 16;
         public const int height = 96;
-        public const int seaLevel = 35;
+        public const int seaLevel = 32;
         private float timeAfterLastUpdate = 0f;
         private const float tick = 1/20f;
         private ulong ticks = 0;
         private PriorityQueue<Block, ulong> updateSchedule;
+        private Dictionary<Vector3i, ulong> lastUpdate;
         private HashSet<Chunk> chunksToUpdate;
-        public static HashSet<BlockType> transparentBlocks = new()
-        {
-            BlockType.Water,
-        };
-
-        public static HashSet<BlockType> cutoutBlocks = new()
-        {
-            BlockType.Glass,
-        };
+        public static FastNoiseLite heightNoise;
+        public static FastNoiseLite dirtNoise;
+        public static FastNoiseLite sandNoise;
+        public static FastNoiseLite caveNoise;
+        public static FastNoiseLite caveNoise2;
+        public static FastNoiseLite breachNoise;
 
         private Dictionary<Faces, Vector3i> neighborByFace = new()
         {
@@ -42,12 +40,55 @@ namespace minecrap.world
         
         public World(int seed, ShaderProgram shaderProgram)
         {
-            this.seed = seed;
             this.shaderProgram = shaderProgram;
             texture = new Texture("textures");
             instance = this;
             updateSchedule = new PriorityQueue<Block, ulong>();
             chunksToUpdate = new HashSet<Chunk>();
+
+            heightNoise = new(seed);
+            heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            heightNoise.SetFrequency(0.005f);
+            heightNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            heightNoise.SetFractalOctaves(8);
+            heightNoise.SetFractalLacunarity(2f);
+            heightNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
+            heightNoise.SetDomainWarpAmp(0.5f);
+
+            dirtNoise = new(seed);
+            dirtNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            dirtNoise.SetFrequency(0.01f);
+            dirtNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            dirtNoise.SetFractalOctaves(8);
+            dirtNoise.SetFractalLacunarity(1.96f);
+
+            sandNoise = new(seed);
+            sandNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            sandNoise.SetFrequency(0.01f);
+            sandNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            sandNoise.SetFractalOctaves(4);
+            sandNoise.SetFractalLacunarity(2f);
+
+            caveNoise = new(seed);
+            caveNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            caveNoise.SetFrequency(0.01f);
+            caveNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            caveNoise.SetFractalOctaves(3);
+            caveNoise.SetFractalLacunarity(2f);
+
+            caveNoise2 = new(seed + 1);
+            caveNoise2.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            caveNoise2.SetFrequency(0.01f);
+            caveNoise2.SetFractalType(FastNoiseLite.FractalType.FBm);
+            caveNoise2.SetFractalOctaves(3);
+            caveNoise2.SetFractalLacunarity(2f);
+
+            breachNoise = new(seed);
+            breachNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            breachNoise.SetFrequency(0.005f);
+            breachNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            breachNoise.SetFractalOctaves(3);
+            breachNoise.SetFractalLacunarity(2f);
         }
 
         public void GenerateWorld(Vector2i worldSize)
@@ -58,7 +99,7 @@ namespace minecrap.world
             {
                 for (int z = 0; z < worldSize.Y; z++)
                 {
-                    chunks[x, z] = new Chunk(new Vector2i(x, z), seed);
+                    chunks[x, z] = new Chunk(new Vector2i(x, z));
                 }
             }
 
@@ -91,6 +132,12 @@ namespace minecrap.world
             return chunks[pos.X / chunkSize, pos.Z / chunkSize].chunkBlocks[pos.X % chunkSize, pos.Y, pos.Z % chunkSize];
         }
 
+        public Color4 GetColor(Vector3i pos)
+        {
+            if (pos.X < 0 || pos.X >= worldSize.X * chunkSize || pos.Z < 0 || pos.Z >= worldSize.Y * chunkSize || pos.Y < 0 || pos.Y >= height) return Color4.White;
+            return chunks[pos.X / chunkSize, pos.Z / chunkSize].chunkLighting[pos.X % chunkSize, pos.Y, pos.Z % chunkSize];
+        }
+
         public void SetBlock(Vector3i pos, BlockType blockType)
         {
             if (pos.X < 0 || pos.X >= worldSize.X * chunkSize || pos.Z < 0 || pos.Z >= worldSize.Y * chunkSize || pos.Y < 0 || pos.Y >= height) return;
@@ -103,10 +150,10 @@ namespace minecrap.world
             ScheduleUpdate(block);
             chunksToUpdate.Add(chunk);
 
-            if (block.pos.X % chunkSize == 0 && chunk.chunkPos.X != 0) chunksToUpdate.Add(chunks[chunkPos.X - 1, chunkPos.Y]);
-            if (block.pos.X % chunkSize == chunkSize - 1 && chunk.chunkPos.X != worldSize.X - 1) chunksToUpdate.Add(chunks[chunkPos.X + 1, chunkPos.Y]);
-            if (block.pos.Z % chunkSize == 0 && chunk.chunkPos.Y != 0) chunksToUpdate.Add(chunks[chunkPos.X, chunkPos.Y - 1]);
-            if (block.pos.Z % chunkSize == chunkSize - 1 && chunk.chunkPos.Y != worldSize.Y - 1) chunksToUpdate.Add(chunks[chunkPos.X, chunkPos.Y + 1]);
+            if (pos.X % chunkSize == 0 && chunk.chunkPos.X != 0) chunksToUpdate.Add(chunks[chunkPos.X - 1, chunkPos.Y]);
+            if (pos.X % chunkSize == chunkSize - 1 && chunk.chunkPos.X != worldSize.X - 1) chunksToUpdate.Add(chunks[chunkPos.X + 1, chunkPos.Y]);
+            if (pos.Z % chunkSize == 0 && chunk.chunkPos.Y != 0) chunksToUpdate.Add(chunks[chunkPos.X, chunkPos.Y - 1]);
+            if (pos.Z % chunkSize == chunkSize - 1 && chunk.chunkPos.Y != worldSize.Y - 1) chunksToUpdate.Add(chunks[chunkPos.X, chunkPos.Y + 1]);
         }
 
         public Dictionary<Faces, Block?> GetNeighbors(Block block)
@@ -119,7 +166,8 @@ namespace minecrap.world
             return result;
         }
 
-        public Block? GetNeighbor(Block block, Faces face) => GetBlock(block.pos + neighborByFace[face]);
+        public Vector3i GetNeighborPos(Vector3i block, Faces face) => block + neighborByFace[face];
+        public Block? GetNeighbor(Block block, Faces face) => GetBlock(GetNeighborPos(block.pos, face));
         
         public List<Block> GetSolidBlocksAroundCollider(Collider collider)
         {
@@ -131,7 +179,7 @@ namespace minecrap.world
                     for (int z = (int)Math.Floor(collider.pos.Z - collider.size.Z / 2); z <= (int)Math.Ceiling(collider.pos.Z + collider.size.Z / 2); z++)
                     {
                         Block? block = GetBlock(new Vector3i(x, y, z));
-                        if (block != null && block.blockType != BlockType.Air && block.blockType != BlockType.Water) blocks.Add(block);
+                        if (block != null && !Game.noColliderBlocks.Contains(block.blockType)) blocks.Add(block);
                     }
                 }
             }
@@ -216,5 +264,16 @@ namespace minecrap.world
         private void ScheduleUpdate(Block block, uint futureTicks) => updateSchedule.Enqueue(block, ticks + futureTicks);
 
         private void ScheduleUpdate(Block block) => ScheduleUpdate(block, 0);
+
+        public Block? GetHighestBlock(Vector2i pos)
+        {
+            for (Vector3i blockPos = new(pos.X, height - 1, pos.Y); blockPos.Y >= 0; blockPos.Y--)
+            {
+                Block? block = GetBlock(blockPos);
+                if (block == null) return null;
+                if (block.blockType != BlockType.Air && block.blockType != BlockType.Water) return block;
+            }
+            return null;
+        }
     }
 }

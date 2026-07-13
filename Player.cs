@@ -11,12 +11,12 @@ namespace minecrap
         private const float gravity = 20f;
         private const float jumpForce = 7f;
         private const float reach = 5f;
-        private const float waterGravity = 10f;
-        private const float waterDrag = 0.85f;
-        private const float maxSinkSpeed = 3f;
-        private const float swimUpSpeed = 2f;
+        private const float waterSpeed = 2f;
+        private const float waterGravity = 5f;
+        private const float waterDrag = 0.2f;
+        private const float swimUpSpeed = 10f;
         private float speedY = 0f;
-        private bool onGround, inWater, lmbDown, rmbDown, rDown, escDown;
+        private bool onGround, inWater;
         private BlockType[] blocks;
         private int selected;
         public Vector3 pos;
@@ -28,7 +28,7 @@ namespace minecrap
             this.pos = pos;
             collider = new Collider(pos, new Vector3(0.6f, 1.8f, 0.6f));
             instance = this;
-            blocks = new BlockType[] { BlockType.Dirt, BlockType.Grass, BlockType.Stone, BlockType.Cobblestone, BlockType.Glass };
+            blocks = new BlockType[] { BlockType.Dirt, BlockType.Grass, BlockType.Stone, BlockType.Cobblestone, BlockType.Glass, BlockType.Sand, BlockType.Sapling };
             selected = 0;
         }
 
@@ -39,63 +39,43 @@ namespace minecrap
 
         private void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
-            if (mouse.IsButtonDown(MouseButton.Left))
+            float deltaTime = Math.Min((float)e.Time, 0.5f);
+
+            if (mouse.IsButtonPressed(MouseButton.Left))
             {
-                if (!lmbDown)
-                {
-                    Block? block = RayCast.RayCastedBlock(Camera.instance.pos, Camera.instance.front, reach);
-                    if (block != null) World.instance.SetBlock((Vector3i)block.pos, BlockType.Air);
-                    lmbDown = true;
-                }
+                Block? block = RayCast.RayCastedBlock(Camera.instance.pos, Camera.instance.front, reach);
+                if (block != null) World.instance.SetBlock(block.pos, BlockType.Air);
             }
-            else lmbDown = false;
 
-            if (mouse.IsButtonDown(MouseButton.Right))
+            if (mouse.IsButtonPressed(MouseButton.Right))
             {
-                if (!rmbDown)
-                {
-                    Block? block = RayCast.PlaceOnBlock(Camera.instance.pos, Camera.instance.front, reach);
-                    if (block != null && !collider.Intersects(block.GetCollider()))
-                    {
-                        World.instance.SetBlock((Vector3i)block.pos, blocks[selected]);
-                    }
-                    rmbDown = true;
-                }
+                Block? block = RayCast.PlaceOnBlock(Camera.instance.pos, Camera.instance.front, reach);
+                if (block != null && !collider.Intersects(block.GetCollider())) World.instance.SetBlock(block.pos, blocks[selected]);
             }
-            else rmbDown = false;
 
-            if (input.IsKeyDown(Keys.R))
+            if (input.IsKeyPressed(Keys.R))
             {
-                if (!rDown)
-                {
-                    Random rand = new();
-                    pos = new Vector3(rand.Next(0, World.instance.worldSize.X * World.chunkSize), 64, rand.Next(0, World.instance.worldSize.Y * World.chunkSize));
-                    speedY = 0;
-                }
-                rDown = true;
+                Random rand = new();
+                Vector2i randomPos = new(rand.Next(0, World.instance.worldSize.X * World.chunkSize), rand.Next(0, World.instance.worldSize.Y * World.chunkSize));
+                pos = World.instance.GetHighestBlock(randomPos).pos + new Vector3(0, 1.5f, 0);
+                speedY = 0;
             }
-            else rDown = false;
 
-            if (input.IsKeyDown(Keys.Escape))
+            if (input.IsKeyPressed(Keys.Escape))
             {
-                if (!escDown)
-                {
-                    if (Game.instance.CursorState == CursorState.Grabbed) Game.instance.CursorState = CursorState.Normal;
-                    else Game.instance.CursorState = CursorState.Grabbed;
-                }
-                escDown = true;
+                Game.instance.CursorState = Game.instance.CursorState == CursorState.Grabbed ? CursorState.Normal : CursorState.Grabbed;
             }
-            else escDown = false;
-            // i'll implement the movement later. not now though.
-            // inWater = CheckWater(pos);
+            inWater = CheckWater(pos);
+            if (inWater) speedY *= MathF.Pow(waterDrag, deltaTime);
 
-            if (input.IsKeyDown(Keys.D1)) SelectBlock(0);
-            if (input.IsKeyDown(Keys.D2)) SelectBlock(1);
-            if (input.IsKeyDown(Keys.D3)) SelectBlock(2);
-            if (input.IsKeyDown(Keys.D4)) SelectBlock(3);
-            if (input.IsKeyDown(Keys.D5)) SelectBlock(4);
+            if (input.IsKeyPressed(Keys.D1) || input.IsKeyPressed(Keys.KeyPad1)) SelectBlock(0);
+            if (input.IsKeyPressed(Keys.D2) || input.IsKeyPressed(Keys.KeyPad2)) SelectBlock(1);
+            if (input.IsKeyPressed(Keys.D3) || input.IsKeyPressed(Keys.KeyPad3)) SelectBlock(2);
+            if (input.IsKeyPressed(Keys.D4) || input.IsKeyPressed(Keys.KeyPad4)) SelectBlock(3);
+            if (input.IsKeyPressed(Keys.D5) || input.IsKeyPressed(Keys.KeyPad5)) SelectBlock(4);
+            if (input.IsKeyPressed(Keys.D6) || input.IsKeyPressed(Keys.KeyPad6)) SelectBlock(5);
+            if (input.IsKeyPressed(Keys.D7) || input.IsKeyPressed(Keys.KeyPad7)) SelectBlock(6);
 
-            float deltaTime = (float)e.Time;
             Vector3 move = Vector3.Zero;
             Vector3 front = Camera.instance.front;
             front.Y = 0;
@@ -111,11 +91,11 @@ namespace minecrap
             if (input.IsKeyDown(Keys.Right) || input.IsKeyDown(Keys.D)) move += right;
             if (move != Vector3.Zero)
             {
-                move = Vector3.Normalize(move) * speed * deltaTime;
+                move = Vector3.Normalize(move) * deltaTime * (inWater ? waterSpeed : speed);
                 if (!CheckCollision(pos + new Vector3(move.X, 0, 0))) pos += new Vector3(move.X, 0, 0);
                 if (!CheckCollision(pos + new Vector3(0, 0, move.Z))) pos += new Vector3(0, 0, move.Z);
             }
-            speedY -= gravity * deltaTime;
+            speedY -= (inWater ? waterGravity : gravity) * deltaTime;
 
             if (!CheckCollision(pos + new Vector3(0, speedY * deltaTime, 0)))
             {
@@ -127,9 +107,9 @@ namespace minecrap
                 onGround = speedY < 0;
                 speedY = 0;
             }
-            if ((input.IsKeyDown(Keys.Space) || input.IsKeyDown(Keys.KeyPad0)) && onGround)
+            if ((input.IsKeyDown(Keys.Space) || input.IsKeyDown(Keys.KeyPad0)) && (onGround || inWater))
             {
-                speedY = jumpForce;
+                speedY = inWater ? Math.Min(speedY + swimUpSpeed * deltaTime, 3) : jumpForce;
                 onGround = false;
             }
 
