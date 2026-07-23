@@ -14,6 +14,13 @@ namespace minecrap.graphics
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
             GL.BufferData(BufferTarget.ElementArrayBuffer, data.Count * sizeof(uint), ref dataSpan[0], BufferUsageHint.StaticDraw);
         }
+        
+        public EBO(uint[] data)
+        {
+            ID = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, data.Length * sizeof(uint), ref data[0], BufferUsageHint.StaticDraw);
+        }
 
         public void Bind() => GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
         public void Unbind() => GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);

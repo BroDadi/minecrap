@@ -12,11 +12,11 @@ namespace minecrap.graphics
             Bind();
         }
 
-        public void LinkToVAO(int location, int size, VBO VBO)
+        public void LinkToVAO(int location, int size, VBO VBO, VertexAttribPointerType type = VertexAttribPointerType.Float, bool normalized = false)
         {
             Bind();
             VBO.Bind();
-            GL.VertexAttribPointer(location, size, VertexAttribPointerType.Float, false, 0, 0);
+            GL.VertexAttribPointer(location, size, type, normalized, 0, 0);
             GL.EnableVertexAttribArray(location);
             Unbind();
         }

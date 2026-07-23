@@ -17,18 +17,17 @@ namespace minecrap.world
         public const int seaLevel = 32;
         private float timeAfterLastUpdate = 0f;
         private const float tick = 1/20f;
+        private const int randomTickBlocks = 3;
         private ulong ticks = 0;
         private PriorityQueue<Block, ulong> updateSchedule;
-        private Dictionary<Vector3i, ulong> lastUpdate;
         private HashSet<Chunk> chunksToUpdate;
         public static FastNoiseLite heightNoise;
         public static FastNoiseLite dirtNoise;
         public static FastNoiseLite sandNoise;
         public static FastNoiseLite caveNoise;
         public static FastNoiseLite caveNoise2;
-        public static FastNoiseLite breachNoise;
 
-        private Dictionary<Faces, Vector3i> neighborByFace = new()
+        private static Dictionary<Faces, Vector3i> neighborByFace = new()
         {
             [Faces.Front] = new Vector3i(0, 0, 1),
             [Faces.Back] = new Vector3i(0, 0, -1),
@@ -82,13 +81,6 @@ namespace minecrap.world
             caveNoise2.SetFractalType(FastNoiseLite.FractalType.FBm);
             caveNoise2.SetFractalOctaves(3);
             caveNoise2.SetFractalLacunarity(2f);
-
-            breachNoise = new(seed);
-            breachNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-            breachNoise.SetFrequency(0.005f);
-            breachNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
-            breachNoise.SetFractalOctaves(3);
-            breachNoise.SetFractalLacunarity(2f);
         }
 
         public void GenerateWorld(Vector2i worldSize)
@@ -132,9 +124,9 @@ namespace minecrap.world
             return chunks[pos.X / chunkSize, pos.Z / chunkSize].chunkBlocks[pos.X % chunkSize, pos.Y, pos.Z % chunkSize];
         }
 
-        public Color4 GetColor(Vector3i pos)
+        public byte GetLighting(Vector3i pos)
         {
-            if (pos.X < 0 || pos.X >= worldSize.X * chunkSize || pos.Z < 0 || pos.Z >= worldSize.Y * chunkSize || pos.Y < 0 || pos.Y >= height) return Color4.White;
+            if (pos.X < 0 || pos.X >= worldSize.X * chunkSize || pos.Z < 0 || pos.Z >= worldSize.Y * chunkSize || pos.Y < 0 || pos.Y >= height) return 15;
             return chunks[pos.X / chunkSize, pos.Z / chunkSize].chunkLighting[pos.X % chunkSize, pos.Y, pos.Z % chunkSize];
         }
 
@@ -146,7 +138,7 @@ namespace minecrap.world
             Chunk chunk = chunks[chunkPos.X, chunkPos.Y];
             Block block = chunk.chunkBlocks[pos.X % chunkSize, pos.Y, pos.Z % chunkSize];
 
-            block.SetBlockType(blockType);
+            block.blockType = blockType;
             ScheduleUpdate(block);
             chunksToUpdate.Add(chunk);
 
@@ -166,7 +158,11 @@ namespace minecrap.world
             return result;
         }
 
-        public Vector3i GetNeighborPos(Vector3i block, Faces face) => block + neighborByFace[face];
+        public static Vector3i GetNeighborPos(Vector3i block, Faces face)
+        {
+            if (face == Faces.Inside) return block;
+            else return block + neighborByFace[face];
+        }
         public Block? GetNeighbor(Block block, Faces face) => GetBlock(GetNeighborPos(block.pos, face));
         
         public List<Block> GetSolidBlocksAroundCollider(Collider collider)
@@ -180,6 +176,23 @@ namespace minecrap.world
                     {
                         Block? block = GetBlock(new Vector3i(x, y, z));
                         if (block != null && !Game.noColliderBlocks.Contains(block.blockType)) blocks.Add(block);
+                    }
+                }
+            }
+            return blocks;
+        }
+
+        public List<Block> GetBlocksInZone(Vector3i center, Vector3i bounds)
+        {
+            List<Block> blocks = new();
+            for (int x = center.X - (bounds.X - 1) / 2; x <= center.X + bounds.X / 2; x++)
+            {
+                for (int y = center.Y - (bounds.Y - 1) / 2; y <= center.Y + bounds.Y / 2; y++)
+                {
+                    for (int z = center.Z - (bounds.Z - 1) / 2; z <= center.Z + bounds.Z / 2; z++)
+                    {
+                        Block? block = GetBlock(new Vector3i(x, y, z));
+                        if (block != null) blocks.Add(block);
                     }
                 }
             }
@@ -217,7 +230,7 @@ namespace minecrap.world
                 {
                     if (ticks >= priority)
                     {
-                        UpdateBlock(block);
+                        block.Update();
                         updateSchedule.Dequeue();
                     }
                     else break;
@@ -230,40 +243,19 @@ namespace minecrap.world
                     }
                     chunksToUpdate.Clear();
                 }
-            }
-        }
 
-        private void UpdateBlock(Block block)
-        {
-            if (block.lastUpdate == ticks) return;
-            block.lastUpdate = ticks;
-            if (block.blockType == BlockType.Air)
-            {
-                Dictionary<Faces, Block?> neighbors = GetNeighbors(block);
-                bool updated = false;
-                foreach (Faces face in neighbors.Keys)
+                foreach (Chunk chunk in chunks)
                 {
-                    if (face != Faces.Bottom && neighbors[face] != null && neighbors[face].blockType == BlockType.Water)
-                    {
-                        SetBlock(block.pos, BlockType.Water);
-                        updated = true;
-
-                        break;
-                    }
-                }
-                if (updated)
-                {
-                    foreach (Faces face in neighbors.Keys)
-                    {
-                        if (neighbors[face] != null) ScheduleUpdate(neighbors[face], 5);
-                    }
+                    chunk.DoRandomTicks(randomTickBlocks);
                 }
             }
         }
 
-        private void ScheduleUpdate(Block block, uint futureTicks) => updateSchedule.Enqueue(block, ticks + futureTicks);
+        public void ScheduleUpdate(Block block, uint futureTicks) => updateSchedule.Enqueue(block, ticks + futureTicks);
 
-        private void ScheduleUpdate(Block block) => ScheduleUpdate(block, 0);
+        public void ScheduleUpdate(Block block) => ScheduleUpdate(block, 0);
+
+        public ulong GetTicks() => ticks;
 
         public Block? GetHighestBlock(Vector2i pos)
         {

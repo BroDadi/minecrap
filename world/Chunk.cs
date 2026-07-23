@@ -9,11 +9,11 @@ namespace minecrap.world
     {
         private List<Vector3> chunkVertexes;
         private List<Vector2> chunkTexCoords;
-        private List<Color4> chunkColors;
+        private List<Color> chunkColors;
         private List<uint> chunkIndexes;
         private List<Vector3> chunkTransVertexes;
         private List<Vector2> chunkTransTexCoords;
-        private List<Color4> chunkTransColors;
+        private List<Color> chunkTransColors;
         private List<uint> chunkTransIndexes;
         private uint indexCount;
         private uint transIndexCount;
@@ -30,7 +30,9 @@ namespace minecrap.world
         private EBO chunkTransEBO;
         private VBO chunkTransColorVBO;
         public Block[,,] chunkBlocks;
-        public Color4[,,] chunkLighting;
+        public byte[,,] chunkLighting;
+        private Random rand;
+        private HashSet<Block> blocksTicked;
 
         public Chunk(Vector2i chunkPos)
         {
@@ -38,15 +40,18 @@ namespace minecrap.world
             blockOffset = new Vector3i(chunkPos.X * World.chunkSize, 0, chunkPos.Y *  World.chunkSize);
             chunkVertexes = new List<Vector3>();
             chunkTexCoords = new List<Vector2>();
-            chunkColors = new List<Color4>();
+            chunkColors = new List<Color>();
             chunkIndexes = new List<uint>();
             chunkTransVertexes = new List<Vector3>();
             chunkTransTexCoords = new List<Vector2>();
-            chunkTransColors = new List<Color4>();
+            chunkTransColors = new List<Color>();
             chunkTransIndexes = new List<uint>();
+            
+            rand = new Random();
+            blocksTicked = new HashSet<Block>();
 
             chunkBlocks = new Block[World.chunkSize, World.height, World.chunkSize];
-            chunkLighting = new Color4[World.chunkSize, World.height, World.chunkSize];
+            chunkLighting = new byte[World.chunkSize, World.height, World.chunkSize];
             GenBlocks();
             GenLighting();
         }
@@ -173,9 +178,9 @@ namespace minecrap.world
                     for (int y = World.height - 1; y >= 0; y--)
                     {
                         BlockType type = chunkBlocks[x, y, z].blockType;
-                        if (type != BlockType.Air && !Game.transparentBlocks.Contains(type) && !Game.cutoutBlocks.Contains(type)) lit = false;
-                        if (lit) chunkLighting[x, y, z] = new Color4(255, 255, 255, 255);
-                        else chunkLighting[x, y, z] = new Color4(128, 128, 128, 255);
+                        if (type != BlockType.Air && !Game.cutoutBlocks.Contains(type)) lit = false;
+                        if (lit) chunkLighting[x, y, z] = 15;
+                        else chunkLighting[x, y, z] = 4;
                     }
                 }
             }
@@ -201,36 +206,17 @@ namespace minecrap.world
                     for (int y = 0; y < World.height; y++)
                     {
                         Block block = chunkBlocks[x, y, z];
-                        if (block.blockType == BlockType.Air) continue;
+                        BlockType blockType = block.blockType;
+                        if (blockType == BlockType.Air) continue;
 
                         bool transparent = Game.transparentBlocks.Contains(block.blockType);
                         Vector3i pos = new(x, y, z);
 
-                        if (ModelData.modelByBlockType.ContainsKey(block.blockType))
+                        foreach (Faces face in ModelData.vertexesByModelType[ModelData.ModelByBlockType(blockType)].Keys)
                         {
-                            List<Vector3> vertexes = block.AddTransformedVertexes(ModelData.vertexesByModelType[ModelData.modelByBlockType[block.blockType]]);
-                            List<Vector2> texCoords = TextureData.customTextures[block.blockType];
-                            Color4 color = World.instance.GetColor(block.pos);
-                            for (int i = 0; i < vertexes.Count; i += 4)
+                            if (CanRender(face, pos))
                             {
-                                chunkVertexes.AddRange(vertexes[i..(i + 4)]);
-                                chunkTexCoords.AddRange(texCoords[i..(i + 4)]);
-                                chunkColors.Add(color);
-                                chunkColors.Add(color);
-                                chunkColors.Add(color);
-                                chunkColors.Add(color);
-                                if (Game.doubleSidedBlocks.Contains(block.blockType)) AddDoubleIndexes(transparent);
-                                else AddSingleIndexes(transparent);
-                            }
-                        }
-                        else
-                        {
-                            foreach (Faces face in Game.allFaces)
-                            {
-                                if (CanRender(face, pos))
-                                {
-                                    IntegrateFace(block, face, transparent);
-                                }
+                                IntegrateFace(block, face, transparent);
                             }
                         }
                     }
@@ -253,43 +239,55 @@ namespace minecrap.world
                 chunkTexCoords.AddRange(data.texCoords);
                 chunkColors.AddRange(data.colors);
             }
-            if (data.twoSided) AddDoubleIndexes(transparent);
-            else AddSingleIndexes(transparent);
+            if (data.twoSided) AddDoubleIndexes(transparent, data.vertexes.Length / 4);
+            else AddSingleIndexes(transparent, data.vertexes.Length / 4);
         }
 
-        public void AddSingleIndexes(bool transparent)
+        public void AddSingleIndexes(bool transparent, int amnt)
         {
             List<uint> list = transparent ? chunkTransIndexes : chunkIndexes;
             uint count = transparent ? transIndexCount : indexCount;
-            list.Add(0 + count);
-            list.Add(1 + count);
-            list.Add(2 + count);
-            list.Add(2 + count);
-            list.Add(3 + count);
-            list.Add(0 + count);
-            if (transparent) transIndexCount += 4;
-            else indexCount += 4;
+
+            for (int i = 0; i < amnt; i++)
+            {
+                list.Add(0 + count);
+                list.Add(1 + count);
+                list.Add(2 + count);
+                list.Add(2 + count);
+                list.Add(3 + count);
+                list.Add(0 + count);
+                count += 4;
+            }
+            
+            if (transparent) transIndexCount += 4 * (uint)amnt;
+            else indexCount += 4 * (uint)amnt;
         }
 
-        public void AddDoubleIndexes(bool transparent)
+        public void AddDoubleIndexes(bool transparent, int amnt)
         {
             List<uint> list = transparent ? chunkTransIndexes : chunkIndexes;
             uint count = transparent ? transIndexCount : indexCount;
-            list.Add(0 + count);
-            list.Add(1 + count);
-            list.Add(2 + count);
-            list.Add(2 + count);
-            list.Add(3 + count);
-            list.Add(0 + count);
 
-            list.Add(1 + count);
-            list.Add(0 + count);
-            list.Add(3 + count);
-            list.Add(3 + count);
-            list.Add(2 + count);
-            list.Add(1 + count);
-            if (transparent) transIndexCount += 4;
-            else indexCount += 4;
+            for (int i = 0; i < amnt; i++)
+            {
+                list.Add(0 + count);
+                list.Add(1 + count);
+                list.Add(2 + count);
+                list.Add(2 + count);
+                list.Add(3 + count);
+                list.Add(0 + count);
+
+                list.Add(1 + count);
+                list.Add(0 + count);
+                list.Add(3 + count);
+                list.Add(3 + count);
+                list.Add(2 + count);
+                list.Add(1 + count);
+                count += 4;
+            }
+
+            if (transparent) transIndexCount += 4 * (uint)amnt;
+            else indexCount += 4 * (uint)amnt;
         }
 
         public void BuildChunk()
@@ -309,7 +307,7 @@ namespace minecrap.world
 
                 chunkColorVBO = new VBO(chunkColors);
                 chunkColorVBO.Bind();
-                chunkVAO.LinkToVAO(2, 4, chunkColorVBO);
+                chunkVAO.LinkToVAO(2, 4, chunkColorVBO, VertexAttribPointerType.UnsignedByte, true);
 
                 chunkEBO = new EBO(chunkIndexes);
             }
@@ -329,7 +327,7 @@ namespace minecrap.world
 
                 chunkTransColorVBO = new VBO(chunkTransColors);
                 chunkTransColorVBO.Bind();
-                chunkTransVAO.LinkToVAO(2, 4, chunkTransColorVBO);
+                chunkTransVAO.LinkToVAO(2, 4, chunkTransColorVBO, VertexAttribPointerType.UnsignedByte, true);
 
                 chunkTransEBO = new EBO(chunkTransIndexes);
             }
@@ -355,10 +353,12 @@ namespace minecrap.world
         {
             chunkVAO?.Delete();
             chunkVBO?.Delete();
+            chunkColorVBO?.Delete();
             chunkTextureVBO?.Delete();
             chunkEBO?.Delete();
             chunkTransVAO?.Delete();
             chunkTransVBO?.Delete();
+            chunkTransColorVBO?.Delete();
             chunkTransTextureVBO?.Delete();
             chunkTransEBO?.Delete();
         }
@@ -366,10 +366,13 @@ namespace minecrap.world
         private bool CanRender(Faces face, Vector3i pos)
         {
             Block? block = World.instance.GetBlock(pos + blockOffset);
-            Block? neighbor = World.instance.GetNeighbor(block, face);
-            return block != null && block.blockType != BlockType.Air &&
-                    (neighbor == null || neighbor.blockType == BlockType.Air ||
+            if (block != null && face == Faces.Inside) return true;
+            else
+            {
+                Block? neighbor = World.instance.GetNeighbor(block, face);
+                return block != null && block.blockType != BlockType.Air && (neighbor == null || neighbor.blockType == BlockType.Air ||
                     ((Game.transparentBlocks.Contains(neighbor.blockType) || Game.cutoutBlocks.Contains(neighbor.blockType)) && block.blockType != neighbor.blockType));
+            }
         }
 
         public void UpdateChunk()
@@ -378,6 +381,21 @@ namespace minecrap.world
             GenLighting();
             GenFaces();
             BuildChunk();
+        }
+
+        public void DoRandomTicks(int blocks)
+        {
+            for (int i = 0; i < World.height; i += 16)
+            {
+                blocksTicked.Clear();
+                for (int j = 0; j < blocks; j++)
+                {
+                    Block randomBlock = chunkBlocks[rand.Next(0, World.chunkSize), rand.Next(i, i + 16), rand.Next(0, World.chunkSize)];
+                    while (blocksTicked.Contains(randomBlock)) randomBlock = chunkBlocks[rand.Next(0, World.chunkSize), rand.Next(i, i + 16), rand.Next(0, World.chunkSize)];
+                    randomBlock.RandomUpdate();
+                    blocksTicked.Add(randomBlock);
+                }
+            }
         }
     }
 }

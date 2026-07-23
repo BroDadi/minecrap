@@ -6,40 +6,73 @@ namespace minecrap.gui
     internal abstract class UIElement
     {
         public Vector2 relSize, offSize, relPos, offPos, pivotPoint;
-        public Color4 color;
+        public Color color;
         protected VAO vao;
         protected VBO vbo, textureVBO, colorVBO;
         protected EBO ebo;
+        protected List<UIElement> children;
+        public UIElement parent;
         public DomAxis dominantAxis = DomAxis.None;
         public float aspectRatio = 0f;
 
-        public abstract void GenElement();
-        public abstract void Render(ShaderProgram shaderProgram);
+        public virtual void GenElement()
+        {
+            if (children != null)
+            {
+                foreach (UIElement child in children)
+                {
+                    child.GenElement();
+                }
+            }
+        }
+        
+        public virtual void Render(ShaderProgram shaderProgram)
+        {
+            if (children != null)
+            {
+                foreach (UIElement child in children)
+                {
+                    child.Render(shaderProgram);
+                }
+            }
+        }
+
+        public virtual void AddChild(UIElement child)
+        {
+            if (children == null) children = new List<UIElement>();
+            children.Add(child);
+            child.parent = this;
+        }
+
         protected Vector2 CalculatePos()
         {
             Vector2 size = CalculateSize();
-            return relPos - size * (pivotPoint - new Vector2(0.5f, 0.5f)) + new Vector2(offPos.X / Game.instance.width, offPos.Y / Game.instance.height);
+            Vector2 parentSize = parent == null ? Game.instance.screenSize : parent.CalculateSize();
+            Vector2 parentPos = parent == null ? Vector2.Zero : parent.CalculatePos();
+            return parentPos + relPos * parentSize - size * (pivotPoint - new Vector2(0.5f, 0.5f)) + offPos;
         }
 
         protected Vector2 CalculateSize()
         {
+            Vector2 relativeTo = parent == null ? Game.instance.screenSize : parent.CalculateSize();
             float width, height;
+
             switch (dominantAxis)
             {
                 case DomAxis.Width:
-                    width = relSize.X * Game.instance.width + offSize.X;
+                    width = relSize.X * relativeTo.X + offSize.X;
                     height = width / aspectRatio;
                     break;
                 case DomAxis.Height:
-                    height = relSize.Y * Game.instance.height + offSize.Y;
+                    height = relSize.Y * relativeTo.Y + offSize.Y;
                     width = height * aspectRatio;
                     break;
                 default:
-                    width = relSize.X * Game.instance.width + offSize.X;
-                    height = relSize.Y * Game.instance.height + offSize.Y;
+                    width = relSize.X * relativeTo.X + offSize.X;
+                    height = relSize.Y * relativeTo.Y + offSize.Y;
                     break;
             }
-            return new Vector2(width / Game.instance.width, height / Game.instance.height);
+            return new Vector2(width, height);
         }
 
         public virtual void Delete()

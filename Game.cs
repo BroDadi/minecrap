@@ -11,14 +11,15 @@ namespace minecrap
 {
     internal class Game : GameWindow
     {
-        public int width, height;
+        public Vector2i screenSize;
         public static Game instance;
         private ShaderProgram shaderProgram;
         private Camera cam;
         private Player player;
         private World world;
         private GUI gui;
-        public UIBlock block; // temp stuff
+        private UIBlock[] invBlocks;
+        private UIImage select;
         private Vector3 skyColor;
         public static HashSet<BlockType> transparentBlocks = new()
         {
@@ -28,11 +29,11 @@ namespace minecrap
         {
             BlockType.Glass,
             BlockType.Sapling,
+            BlockType.Leaves,
         };
         public static HashSet<BlockType> doubleSidedBlocks = new()
         {
             BlockType.Water,
-            BlockType.Sapling,
         };
         public static HashSet<BlockType> noColliderBlocks = new()
         {
@@ -44,12 +45,29 @@ namespace minecrap
         {
             BlockType.Sapling,
         };
-        public static Faces[] allFaces = Enum.GetValues<Faces>();
+        public static Faces[] allOuterFaces = new Faces[]
+        {
+            Faces.Front,
+            Faces.Back,
+            Faces.Left,
+            Faces.Right,
+            Faces.Top,
+            Faces.Bottom
+        };
+        public static Dictionary<Faces, float> shadeSides = new()
+        {
+            [Faces.Front] = 0.85f,
+            [Faces.Back] = 0.85f,
+            [Faces.Left] = 0.75f,
+            [Faces.Right] = 0.75f,
+            [Faces.Top] = 1f,
+            [Faces.Bottom] = 0.66f,
+            [Faces.Inside] = 1f
+        };
 
         public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
-            this.width = width;
-            this.height = height;
+            screenSize = new Vector2i(width, height);
             instance = this;
             CenterWindow(new Vector2i(width, height));
             skyColor = new(0.5f, 0.6f, 1f);
@@ -59,8 +77,7 @@ namespace minecrap
         {
             base.OnResize(e);
             GL.Viewport(0, 0, e.Width, e.Height);
-            width = e.Width;
-            height = e.Height;
+            screenSize = new Vector2i(e.Width, e.Height);
             gui?.RebuildGUI();
         }
 
@@ -83,10 +100,22 @@ namespace minecrap
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             gui = new GUI();
+            
             UIImage image = new(new Vector2(0.025f, 0.025f), Vector2.Zero, new Vector2(0.5f, 0.5f), Vector2.Zero, new Texture("crosshair"), 1f, DomAxis.Height);
+            
+            UIImage inv = new(new Vector2(0.2f, 0.066f), Vector2.Zero, new Vector2(0.5f, 0.01f), Vector2.Zero, new Texture("inventory"), 9f, DomAxis.Height, new Vector2(0.5f, 0f));
+            invBlocks = new UIBlock[9]; 
+            for (int i = 0; i < 9; i++)
+            {
+                UIBlock invBlock = new(BlockType.Dirt, new Vector2(7/83f, 7f/9f), Vector2.Zero, new Vector2((i - 4) * 16 / 146f, 0f), Vector2.Zero, 1, DomAxis.Height);
+                inv.AddChild(invBlock);
+                invBlocks[i] = invBlock;
+            }
+            select = new(new Vector2(10/73f, 10/9f), Vector2.Zero, new Vector2(-4/9f, 0f), Vector2.Zero, new Texture("select"), 1, DomAxis.Height);
+            inv.AddChild(select);
+            
             gui.AddToGUI(image);
-            block = new(BlockType.Dirt, new Vector2(0.2f, 0.2f), Vector2.Zero, new Vector2(1f, 1f), new Vector2(-10f, -10f), 1f, DomAxis.Height, new Vector2(1f, 1f));
-            gui.AddToGUI(block);
+            gui.AddToGUI(inv);
 
             Vector2i spawnPos = new(worldSize.X * 8, worldSize.Y * 8);
             Vector3 playerPos = world.GetHighestBlock(spawnPos).pos + new Vector3(0, 1.5f, 0);
@@ -141,6 +170,14 @@ namespace minecrap
             cam.Update(mouse, args);
             player.Update(input, mouse, args);
             world.Update(args);
+        }
+
+        public void UpdateInvBlockType(int index, BlockType blockType) => invBlocks[index].SetBlockType(blockType);
+        
+        public void UpdateSelectPlacement(int num)
+        {
+            select.relPos = new Vector2((num - 4) * 16 / 146f, 0f);
+            select.GenElement();
         }
     }
 }

@@ -1,3 +1,4 @@
+using minecrap.graphics;
 using OpenTK.Mathematics;
 
 namespace minecrap.world
@@ -13,6 +14,8 @@ namespace minecrap.world
         Glass,
         Sand,
         Sapling,
+        Log,
+        Leaves,
     }
 
     internal enum Faces
@@ -22,63 +25,15 @@ namespace minecrap.world
         Left,
         Right,
         Top,
-        Bottom
+        Bottom,
+        Inside
     }
 
     internal struct FaceData
     {
-        public List<Vector3> vertexes;
-        public List<Vector2> texCoords; 
-        public List<Color4> colors;
+        public Vector3[] vertexes;
+        public Vector2[] texCoords; 
+        public Color[] colors;
         public bool twoSided;
-    };
-
-    internal struct RawFaceData
-    {
-        public static readonly Dictionary<Faces, List<Vector3>> rawVertexData = new()
-        {
-            [Faces.Front] = new List<Vector3>()
-            {
-                new Vector3(-0.5f, 0.5f, 0.5f),
-                new Vector3(0.5f, 0.5f, 0.5f),
-                new Vector3(0.5f, -0.5f, 0.5f),
-                new Vector3(-0.5f, -0.5f, 0.5f)
-            },
-            [Faces.Back] = new List<Vector3>()
-            {
-                new Vector3(0.5f, 0.5f, -0.5f),
-                new Vector3(-0.5f, 0.5f, -0.5f),
-                new Vector3(-0.5f, -0.5f, -0.5f),
-                new Vector3(0.5f, -0.5f, -0.5f)
-            },
-            [Faces.Left] = new List<Vector3>()
-            {
-                new Vector3(-0.5f, 0.5f, -0.5f),
-                new Vector3(-0.5f, 0.5f, 0.5f),
-                new Vector3(-0.5f, -0.5f, 0.5f),
-                new Vector3(-0.5f, -0.5f, -0.5f)
-            },
-            [Faces.Right] = new List<Vector3>()
-            {
-                new Vector3(0.5f, 0.5f, 0.5f),
-                new Vector3(0.5f, 0.5f, -0.5f),
-                new Vector3(0.5f, -0.5f, -0.5f),
-                new Vector3(0.5f, -0.5f, 0.5f)
-            },
-            [Faces.Top] = new List<Vector3>()
-            {
-                new Vector3(-0.5f, 0.5f, -0.5f),
-                new Vector3(0.5f, 0.5f, -0.5f),
-                new Vector3(0.5f, 0.5f, 0.5f),
-                new Vector3(-0.5f, 0.5f, 0.5f)
-            },
-            [Faces.Bottom] = new List<Vector3>()
-            {
-                new Vector3(-0.5f, -0.5f, 0.5f),
-                new Vector3(0.5f, -0.5f, 0.5f),
-                new Vector3(0.5f, -0.5f, -0.5f),
-                new Vector3(-0.5f, -0.5f, -0.5f)
-            }
-        };
     };
 }
