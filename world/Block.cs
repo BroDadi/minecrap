@@ -49,7 +49,33 @@ namespace minecrap.world
             return faceData;
         }
 
-        public Collider GetCollider() => new Collider(pos, Vector3.One);
+        public Collider GetIntCollider() => GetIntCollider(blockType);
+
+        public Collider GetIntCollider(BlockType type)
+        {
+            switch (type)
+            {
+                case BlockType.Air:
+                case BlockType.Water:
+                    return Collider.Null;
+                default:
+                    return new Collider(pos, Vector3.One);
+            }
+        }
+
+        public Collider GetCollider() => GetCollider(blockType);
+
+        public Collider GetCollider(BlockType type)
+        {
+            switch (type)
+            {
+                case BlockType.Air:
+                case BlockType.Sapling:
+                    return Collider.Null;
+                default:
+                    return new Collider(pos, Vector3.One);
+            }
+        }
 
         public void Update()
         {

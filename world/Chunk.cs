@@ -72,15 +72,15 @@ namespace minecrap.world
             return heightMap;
         }
 
-        private float[,] GenDirt()
+        private int[,] GenDirt()
         {
-            float[,] heightMap = new float[World.chunkSize, World.chunkSize];
+            int[,] heightMap = new int[World.chunkSize, World.chunkSize];
 
             for (int x = 0; x < World.chunkSize; x++)
             {
                 for (int z = 0; z < World.chunkSize; z++)
                 {
-                    heightMap[x,z] = 3 + World.dirtNoise.GetNoise(x + blockOffset.X, z + blockOffset.Z) * 3;
+                    heightMap[x,z] = (int)Math.Round(3 + World.dirtNoise.GetNoise(x + blockOffset.X, z + blockOffset.Z) * 3);
                 }
             }
 
@@ -102,9 +102,9 @@ namespace minecrap.world
             return sandMap;
         }
 
-        private float[,,] GenCaveMap(FastNoiseLite noise)
+        private bool[,,] GenCaveMap()
         {
-            float[,,] caveMap = new float[World.chunkSize, World.height, World.chunkSize];
+            bool[,,] caveMap = new bool[World.chunkSize, World.height, World.chunkSize];
 
             for (int x = 0; x < World.chunkSize; x++)
             {
@@ -112,7 +112,9 @@ namespace minecrap.world
                 {
                     for (int z = 0; z < World.chunkSize; z++)
                     {
-                        caveMap[x, y, z] = noise.GetNoise(x + blockOffset.X, y, z + blockOffset.Z);
+                        float caveNoise = World.caveNoise.GetNoise(x + blockOffset.X, y, z + blockOffset.Z);
+                        float caveNoise2 = World.caveNoise2.GetNoise(x + blockOffset.X, y, z + blockOffset.Z);
+                        caveMap[x, y, z] = Math.Abs(caveNoise) < 0.05f && Math.Abs(caveNoise2) < 0.05f;
                     }
                 }
             }
@@ -120,26 +122,55 @@ namespace minecrap.world
             return caveMap;
         }
 
+        private bool[,,] GenOreMap(FastNoiseLite noise, float threshold, int height)
+        {
+            bool[,,] oreMap = new bool[World.chunkSize, height, World.chunkSize];
+
+            for (int x = 0; x < World.chunkSize; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int z = 0; z < World.chunkSize; z++)
+                    {
+                        float oreNoise = noise.GetNoise(x + blockOffset.X, y, z + blockOffset.Z);
+                        oreMap[x, y, z] = Math.Abs(oreNoise) > threshold;
+                    }
+                }
+            }
+
+            return oreMap;
+        }
+
         public void GenBlocks()
         {
             float[,] heightMap = GenHeights();
-            float[,] dirtMap = GenDirt();
+            int[,] dirtMap = GenDirt();
             float[,] sandMap = GenSandMap();
-            float[,,] caveMap = GenCaveMap(World.caveNoise);
-            float[,,] caveMap2 = GenCaveMap(World.caveNoise2);
+            bool[,,] caveMap = GenCaveMap();
+            bool[,,] coalMap = GenOreMap(World.coalNoise, 0.775f, 64);
+            bool[,,] ironMap = GenOreMap(World.ironNoise, 0.825f, 48);
+            bool[,,] goldMap = GenOreMap(World.goldNoise, 0.85f, 32);
+            bool[,,] diamondMap = GenOreMap(World.diamondNoise, 0.875f, 16);
+
             for (int x = 0; x < World.chunkSize; x++)
             {
                 for (int z = 0; z < World.chunkSize; z++)
                 {
-                    int height = (int)((heightMap[x, z] + 1) * 40);
-                    int dirtHeight = height - (int)dirtMap[x, z];
+                    int height = (int)((heightMap[x, z] + 1) * 40 + 32);
+                    int dirtHeight = height - dirtMap[x, z];
                     for (int y = 0; y < World.height; y++)
                     {
                         BlockType type = BlockType.Air;
 
-                        if (y < dirtHeight)
+                        if (y == 0) type = BlockType.Unbreakable;
+                        else if (y < dirtHeight)
                         {
-                            if (Math.Abs(caveMap[x, y, z]) < 0.05f && Math.Abs(caveMap2[x, y, z]) < 0.05f) type = BlockType.Air;
+                            if (caveMap[x, y, z]) type = BlockType.Air;
+                            else if (y <= 64 && coalMap[x, y - 1, z]) type = BlockType.CoalOre;
+                            else if (y <= 48 && ironMap[x, y - 1, z]) type = BlockType.IronOre;
+                            else if (y <= 32 && goldMap[x, y - 1, z]) type = BlockType.GoldOre;
+                            else if (y <= 16 && diamondMap[x, y - 1, z]) type = BlockType.DiamondOre;
+
                             else type = BlockType.Stone;
                         }
                         else if (y < height)

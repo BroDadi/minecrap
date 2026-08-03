@@ -10,7 +10,9 @@ namespace minecrap.gui
         protected VAO vao;
         protected VBO vbo, textureVBO, colorVBO;
         protected EBO ebo;
-        protected List<UIElement> children;
+        public List<UIElement> children;
+        public bool enabled = true;
+        public bool clickable = false;
         public UIElement parent;
         public DomAxis dominantAxis = DomAxis.None;
         public float aspectRatio = 0f;
@@ -25,8 +27,14 @@ namespace minecrap.gui
                 }
             }
         }
+
+        public void Render(ShaderProgram shaderProgram)
+        {
+            if (!enabled) return;
+            OnRender(shaderProgram);
+        }
         
-        public virtual void Render(ShaderProgram shaderProgram)
+        protected virtual void OnRender(ShaderProgram shaderProgram)
         {
             if (children != null)
             {
@@ -75,6 +83,20 @@ namespace minecrap.gui
             return new Vector2(width, height);
         }
 
+        public bool IsCursorOnElement(Vector2 cursor)
+        {
+            if (clickable && enabled)
+            {
+                Vector2 size = CalculateSize();
+                Vector2 pos = CalculatePos();
+                Vector2 min = pos - size / 2;
+                Vector2 max = pos + size / 2;
+
+                return cursor.X >= min.X && cursor.X <= max.X && cursor.Y >= min.Y && cursor.Y <= max.Y;
+            }
+            return false;
+        }
+
         public virtual void Delete()
         {
             vbo.Delete();
@@ -83,5 +105,9 @@ namespace minecrap.gui
             vao.Delete();
             ebo.Delete();
         }
+
+        public virtual void Disable() => enabled = false;
+        public virtual void Enable() => enabled = true;
+        public virtual void OnClick() {}
     }
 }

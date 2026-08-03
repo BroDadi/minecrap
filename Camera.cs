@@ -47,6 +47,12 @@ namespace minecrap
 
         private void InputController(MouseState mouse, FrameEventArgs e)
         {
+            if (!Game.instance.IsCursorLocked())
+            {
+                firstMove = true;
+                return;
+            }
+            
             if (firstMove)
             {
                 lastPos = new Vector2(mouse.X, mouse.Y);

@@ -20,40 +20,42 @@ namespace minecrap
         private GUI gui;
         private UIBlock[] invBlocks;
         private UIImage select;
+        private UIPanel fullInv;
         private Vector3 skyColor;
-        public static HashSet<BlockType> transparentBlocks = new()
-        {
+        private bool inInventory;
+        public static HashSet<BlockType> transparentBlocks =
+        [
             BlockType.Water,
-        };
-        public static HashSet<BlockType> cutoutBlocks = new()
-        {
+        ];
+        public static HashSet<BlockType> cutoutBlocks =
+        [
             BlockType.Glass,
             BlockType.Sapling,
             BlockType.Leaves,
-        };
-        public static HashSet<BlockType> doubleSidedBlocks = new()
-        {
+        ];
+        public static HashSet<BlockType> doubleSidedBlocks =
+        [
             BlockType.Water,
-        };
-        public static HashSet<BlockType> noColliderBlocks = new()
-        {
+        ];
+        public static HashSet<BlockType> nonSolidBlocks =
+        [
             BlockType.Air,
             BlockType.Water,
             BlockType.Sapling,
-        };
-        public static HashSet<BlockType> renderAsSprite = new()
-        {
+        ];
+        public static HashSet<BlockType> renderAsSprite =
+        [
             BlockType.Sapling,
-        };
-        public static Faces[] allOuterFaces = new Faces[]
-        {
+        ];
+        public static Faces[] allOuterFaces =
+        [
             Faces.Front,
             Faces.Back,
             Faces.Left,
             Faces.Right,
             Faces.Top,
             Faces.Bottom
-        };
+        ];
         public static Dictionary<Faces, float> shadeSides = new()
         {
             [Faces.Front] = 0.85f,
@@ -64,6 +66,20 @@ namespace minecrap
             [Faces.Bottom] = 0.66f,
             [Faces.Inside] = 1f
         };
+        public static BlockType[] fullInventory =
+        [
+            BlockType.Dirt,
+            BlockType.Grass,
+            BlockType.Stone,
+            BlockType.Cobblestone,
+            BlockType.Glass,
+            BlockType.Sand,
+            BlockType.Sapling,
+            BlockType.Log,
+            BlockType.Leaves,
+            BlockType.Planks,
+            BlockType.Bricks,
+        ];
 
         public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
@@ -107,22 +123,30 @@ namespace minecrap
             invBlocks = new UIBlock[9]; 
             for (int i = 0; i < 9; i++)
             {
-                UIBlock invBlock = new(BlockType.Dirt, new Vector2(7/83f, 7f/9f), Vector2.Zero, new Vector2((i - 4) * 16 / 146f, 0f), Vector2.Zero, 1, DomAxis.Height);
+                UIBlock invBlock = new(BlockType.Dirt, new Vector2(7/83f, 7f/9f), Vector2.Zero, new Vector2((i - 4) * 16 / 146f, 0f), Vector2.Zero, false, 1, DomAxis.Height);
                 inv.AddChild(invBlock);
                 invBlocks[i] = invBlock;
             }
             select = new(new Vector2(10/73f, 10/9f), Vector2.Zero, new Vector2(-4/9f, 0f), Vector2.Zero, new Texture("select"), 1, DomAxis.Height);
             inv.AddChild(select);
+
+            fullInv = new UIPanel(new Vector2(0.5f, 0.5f), Vector2.Zero, new Vector2(0.5f, 0.5f), Vector2.Zero, new Color(127, 127, 127, 127), 9f/4f, DomAxis.Height);
+            UIBlockGrid invGrid = new(new Vector2(1, 1), Vector2.Zero, Vector2.Zero, Vector2.Zero, 9, 4, DomAxis.Height);
+            fullInv.AddChild(invGrid);
+            invGrid.AddBlocks(fullInventory);
+            fullInv.Disable();
+            
             
             gui.AddToGUI(image);
             gui.AddToGUI(inv);
+            gui.AddToGUI(fullInv);
 
             Vector2i spawnPos = new(worldSize.X * 8, worldSize.Y * 8);
             Vector3 playerPos = world.GetHighestBlock(spawnPos).pos + new Vector3(0, 1.5f, 0);
             cam = new Camera(playerPos + new Vector3(0f, 0.5f, 0f));
             player = new Player(playerPos);
 
-            CursorState = CursorState.Grabbed;
+            LockCursor();
         }
 
         protected override void OnUnload()
@@ -148,7 +172,7 @@ namespace minecrap
             GL.UniformMatrix4(projectionLocation, true, ref projection);
             GL.Uniform3(skyColorLocation, skyColor);
 
-            world.RenderWorld();
+            world.RenderChunks(world.GetChunksAroundPlayer(8));
 
             GL.Disable(EnableCap.DepthTest);
             view = Matrix4.Identity;
@@ -170,6 +194,8 @@ namespace minecrap
             cam.Update(mouse, args);
             player.Update(input, mouse, args);
             world.Update(args);
+
+            if (inInventory && mouse.IsButtonPressed(MouseButton.Left)) gui.Click(new Vector2(mouse.Position.X, screenSize.Y - mouse.Position.Y));
         }
 
         public void UpdateInvBlockType(int index, BlockType blockType) => invBlocks[index].SetBlockType(blockType);
@@ -178,6 +204,24 @@ namespace minecrap
         {
             select.relPos = new Vector2((num - 4) * 16 / 146f, 0f);
             select.GenElement();
+        }
+
+        public void LockCursor() => CursorState = CursorState.Grabbed;
+        public void UnlockCursor() => CursorState = CursorState.Normal;
+        public bool IsCursorLocked() => CursorState == CursorState.Grabbed;
+        public void ToggleFullInv()
+        {
+            if (inInventory)
+            {
+                LockCursor();
+                fullInv.Disable();
+            }
+            else
+            {
+                UnlockCursor();
+                fullInv.Enable();
+            }
+            inInventory = !inInventory;
         }
     }
 }

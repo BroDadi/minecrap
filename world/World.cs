@@ -13,8 +13,8 @@ namespace minecrap.world
         public static World instance;
         public Vector2i worldSize;
         public const int chunkSize = 16;
-        public const int height = 96;
-        public const int seaLevel = 32;
+        public const int height = 128;
+        public const int seaLevel = 64;
         private float timeAfterLastUpdate = 0f;
         private const float tick = 1/20f;
         private const int randomTickBlocks = 3;
@@ -26,6 +26,10 @@ namespace minecrap.world
         public static FastNoiseLite sandNoise;
         public static FastNoiseLite caveNoise;
         public static FastNoiseLite caveNoise2;
+        public static FastNoiseLite coalNoise;
+        public static FastNoiseLite ironNoise;
+        public static FastNoiseLite goldNoise;
+        public static FastNoiseLite diamondNoise;
 
         private static Dictionary<Faces, Vector3i> neighborByFace = new()
         {
@@ -81,6 +85,34 @@ namespace minecrap.world
             caveNoise2.SetFractalType(FastNoiseLite.FractalType.FBm);
             caveNoise2.SetFractalOctaves(3);
             caveNoise2.SetFractalLacunarity(2f);
+
+            coalNoise = new(seed);
+            coalNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            coalNoise.SetFrequency(0.05f);
+            coalNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            coalNoise.SetFractalOctaves(2);
+            coalNoise.SetFractalLacunarity(2f);
+
+            ironNoise = new(seed);
+            ironNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            ironNoise.SetFrequency(0.06f);
+            ironNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            ironNoise.SetFractalOctaves(2);
+            ironNoise.SetFractalLacunarity(2f);
+
+            goldNoise = new(seed);
+            goldNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            goldNoise.SetFrequency(0.066f);
+            goldNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            goldNoise.SetFractalOctaves(2);
+            goldNoise.SetFractalLacunarity(2f);
+
+            diamondNoise = new(seed);
+            diamondNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+            diamondNoise.SetFrequency(0.075f);
+            diamondNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+            diamondNoise.SetFractalOctaves(2);
+            diamondNoise.SetFractalLacunarity(2f);
         }
 
         public void GenerateWorld(Vector2i worldSize)
@@ -105,14 +137,34 @@ namespace minecrap.world
             }
         }
 
-        public void RenderWorld()
+        public List<Chunk> GetChunksAroundPlayer(int radius)
+        {
+            Vector2i centerChunk = new((int)Player.instance.pos.X / 16, (int)Player.instance.pos.Z / 16);
+            List<Chunk> result = new();
+
+            for (int x = -radius; x <= radius; x++)
+            {
+                int chunkX = centerChunk.X + x;
+                for (int z = -radius; z <= radius; z++)
+                {
+                    int chunkZ = centerChunk.Y + z;
+                    if (chunkX >= 0 && chunkX < worldSize.X && chunkZ >= 0 && chunkZ < worldSize.Y && Math.Abs(x * x) + Math.Abs(z * z) <= radius * radius)
+                    {
+                        result.Add(chunks[chunkX, chunkZ]);
+                    }
+                }
+            }
+            return result;
+        }
+
+        public void RenderChunks(List<Chunk> chunksToRender)
         {
             texture.Bind();
-            foreach (Chunk chunk in chunks)
+            foreach (Chunk chunk in chunksToRender)
             {
                 chunk.RenderNormal(shaderProgram);
             }
-            foreach (Chunk chunk in chunks)
+            foreach (Chunk chunk in chunksToRender)
             {
                 chunk.RenderTransparent(shaderProgram);
             }
@@ -150,7 +202,7 @@ namespace minecrap.world
 
         public Dictionary<Faces, Block?> GetNeighbors(Block block)
         {
-            Dictionary<Faces, Block?> result = new();
+            Dictionary<Faces, Block?> result = [];
             foreach (Faces face in neighborByFace.Keys)
             {
                 result[face] = GetNeighbor(block, face);
@@ -167,7 +219,7 @@ namespace minecrap.world
         
         public List<Block> GetSolidBlocksAroundCollider(Collider collider)
         {
-            List<Block> blocks = new();
+            List<Block> blocks = [];
             for (int x = (int)Math.Floor(collider.pos.X - collider.size.X / 2); x <= (int)Math.Ceiling(collider.pos.X + collider.size.X / 2); x++)
             {
                 for (int y = (int)Math.Floor(collider.pos.Y - collider.size.Y / 2); y <= (int)Math.Ceiling(collider.pos.Y + collider.size.Y / 2); y++)
@@ -175,7 +227,7 @@ namespace minecrap.world
                     for (int z = (int)Math.Floor(collider.pos.Z - collider.size.Z / 2); z <= (int)Math.Ceiling(collider.pos.Z + collider.size.Z / 2); z++)
                     {
                         Block? block = GetBlock(new Vector3i(x, y, z));
-                        if (block != null && !Game.noColliderBlocks.Contains(block.blockType)) blocks.Add(block);
+                        if (block != null && !Game.nonSolidBlocks.Contains(block.blockType)) blocks.Add(block);
                     }
                 }
             }
@@ -184,7 +236,7 @@ namespace minecrap.world
 
         public List<Block> GetBlocksInZone(Vector3i center, Vector3i bounds)
         {
-            List<Block> blocks = new();
+            List<Block> blocks = [];
             for (int x = center.X - (bounds.X - 1) / 2; x <= center.X + bounds.X / 2; x++)
             {
                 for (int y = center.Y - (bounds.Y - 1) / 2; y <= center.Y + bounds.Y / 2; y++)
@@ -201,7 +253,7 @@ namespace minecrap.world
 
         public List<Block> GetWaterAroundCollider(Collider collider)
         {
-            List<Block> blocks = new();
+            List<Block> blocks = [];
             for (int x = (int)Math.Floor(collider.pos.X - collider.size.X / 2); x <= (int)Math.Ceiling(collider.pos.X + collider.size.X / 2); x++)
             {
                 for (int y = (int)Math.Floor(collider.pos.Y - collider.size.Y / 2); y <= (int)Math.Ceiling(collider.pos.Y + collider.size.Y / 2); y++)

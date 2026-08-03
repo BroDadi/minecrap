@@ -14,53 +14,53 @@ namespace minecrap.world
         {
             [ModelType.Block] = new Dictionary<Faces, Vector3[]>()
             {
-                [Faces.Front] = new Vector3[]
-                {
+                [Faces.Front] =
+                [
                     new Vector3(-0.5f, 0.5f, 0.5f),
                     new Vector3(0.5f, 0.5f, 0.5f),
                     new Vector3(0.5f, -0.5f, 0.5f),
                     new Vector3(-0.5f, -0.5f, 0.5f)
-                },
-                [Faces.Back] = new Vector3[]
-                {
+                ],
+                [Faces.Back] =
+                [
                     new Vector3(0.5f, 0.5f, -0.5f),
                     new Vector3(-0.5f, 0.5f, -0.5f),
                     new Vector3(-0.5f, -0.5f, -0.5f),
                     new Vector3(0.5f, -0.5f, -0.5f)
-                },
-                [Faces.Left] = new Vector3[]
-                {
+                ],
+                [Faces.Left] =
+                [
                     new Vector3(-0.5f, 0.5f, -0.5f),
                     new Vector3(-0.5f, 0.5f, 0.5f),
                     new Vector3(-0.5f, -0.5f, 0.5f),
                     new Vector3(-0.5f, -0.5f, -0.5f)
-                },
-                [Faces.Right] = new Vector3[]
-                {
+                ],
+                [Faces.Right] =
+                [
                     new Vector3(0.5f, 0.5f, 0.5f),
                     new Vector3(0.5f, 0.5f, -0.5f),
                     new Vector3(0.5f, -0.5f, -0.5f),
                     new Vector3(0.5f, -0.5f, 0.5f)
-                },
-                [Faces.Top] = new Vector3[]
-                {
+                ],
+                [Faces.Top] =
+                [
                     new Vector3(-0.5f, 0.5f, -0.5f),
                     new Vector3(0.5f, 0.5f, -0.5f),
                     new Vector3(0.5f, 0.5f, 0.5f),
                     new Vector3(-0.5f, 0.5f, 0.5f)
-                },
-                [Faces.Bottom] = new Vector3[]
-                {
+                ],
+                [Faces.Bottom] =
+                [
                     new Vector3(-0.5f, -0.5f, 0.5f),
                     new Vector3(0.5f, -0.5f, 0.5f),
                     new Vector3(0.5f, -0.5f, -0.5f),
                     new Vector3(-0.5f, -0.5f, -0.5f)
-                }
+                ]
             },
             [ModelType.Decor] = new Dictionary<Faces, Vector3[]>()
             {
-                [Faces.Inside] = new Vector3[]
-                {
+                [Faces.Inside] =
+                [
                     new Vector3(-0.5f, 0.5f, -0.5f),
                     new Vector3(0.5f, 0.5f, 0.5f),
                     new Vector3(0.5f, -0.5f, 0.5f),
@@ -80,7 +80,7 @@ namespace minecrap.world
                     new Vector3(-0.5f, 0.5f, 0.5f),
                     new Vector3(-0.5f, -0.5f, 0.5f),
                     new Vector3(0.5f, -0.5f, -0.5f),
-                }
+                ]
             },
         };
 

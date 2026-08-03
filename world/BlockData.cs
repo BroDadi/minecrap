@@ -16,6 +16,13 @@ namespace minecrap.world
         Sapling,
         Log,
         Leaves,
+        Planks,
+        Bricks,
+        Unbreakable,
+        CoalOre,
+        IronOre,
+        GoldOre,
+        DiamondOre,
     }
 
     internal enum Faces

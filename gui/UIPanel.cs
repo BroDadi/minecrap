@@ -4,21 +4,18 @@ using OpenTK.Mathematics;
 
 namespace minecrap.gui
 {
-    internal class UIImage : UIElement
+    internal class UIPanel : UIElement
     {
-        private Texture texture;
-
-        public UIImage(Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, Texture texture, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color? color = null, bool clickable = false)
+        public UIPanel(Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, Color color, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null)
         {
             this.relSize = relSize;
             this.offSize = offSize;
             this.relPos = relPos;
             this.offPos = offPos;
-            this.texture = texture;
             this.aspectRatio = aspectRatio;
             this.dominantAxis = dominantAxis;
             this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
-            this.color = color ?? new Color(255, 255, 255, 255);
+            this.color = color;
         }
 
         public override void GenElement()
@@ -38,16 +35,6 @@ namespace minecrap.gui
             vbo.Bind();
             vao.LinkToVAO(0, 3, vbo);
 
-            textureVBO = new VBO(new Vector2[]
-            {
-                new Vector2(0, 1),
-                new Vector2(1, 1),
-                new Vector2(1, 0),
-                new Vector2(0, 0),
-            });
-            textureVBO.Bind();
-            vao.LinkToVAO(1, 2, textureVBO);
-
             colorVBO = new VBO(new Color[] { color, color, color, color });
             vao.LinkToVAO(2, 4, colorVBO, VertexAttribPointerType.UnsignedByte, true);
 
@@ -59,7 +46,6 @@ namespace minecrap.gui
         protected override void OnRender(ShaderProgram shaderProgram)
         {
             shaderProgram.Bind();
-            texture.Bind();
             vao.Bind();
             ebo.Bind();
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);

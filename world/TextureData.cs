@@ -15,13 +15,13 @@ namespace minecrap.world
             {
                 for (int y = 0; y < height; y++)
                 {
-                    Vector2[] arr = new Vector2[]
-                    {
+                    Vector2[] arr =
+                    [
                         new Vector2((float)x / width, (float)(height - y) / height),
                         new Vector2((float)(x + 1) / width, (float)(height - y) / height),
                         new Vector2((float)(x + 1) / width, (float)(height - y - 1) / height),
                         new Vector2((float)x / width, (float)(height - y - 1) / height),
-                    };
+                    ];
                     result[x, y] = arr;
                 }
             }
@@ -111,6 +111,69 @@ namespace minecrap.world
                 [Faces.Top] = textures[10, 0],
                 [Faces.Bottom] = textures[10, 0],
             },
+            [BlockType.Planks] = new Dictionary<Faces, Vector2[]>()
+            {
+                [Faces.Front] = textures[11, 0],
+                [Faces.Back] = textures[11, 0],
+                [Faces.Left] = textures[11, 0],
+                [Faces.Right] = textures[11, 0],
+                [Faces.Top] = textures[11, 0],
+                [Faces.Bottom] = textures[11, 0],
+            },
+            [BlockType.Bricks] = new Dictionary<Faces, Vector2[]>()
+            {
+                [Faces.Front] = textures[12, 0],
+                [Faces.Back] = textures[12, 0],
+                [Faces.Left] = textures[12, 0],
+                [Faces.Right] = textures[12, 0],
+                [Faces.Top] = textures[12, 0],
+                [Faces.Bottom] = textures[12, 0],
+            },
+            [BlockType.Unbreakable] = new Dictionary<Faces, Vector2[]>()
+            {
+                [Faces.Front] = textures[13, 0],
+                [Faces.Back] = textures[13, 0],
+                [Faces.Left] = textures[13, 0],
+                [Faces.Right] = textures[13, 0],
+                [Faces.Top] = textures[13, 0],
+                [Faces.Bottom] = textures[13, 0],
+            },
+            [BlockType.CoalOre] = new Dictionary<Faces, Vector2[]>()
+            {
+                [Faces.Front] = textures[14, 0],
+                [Faces.Back] = textures[14, 0],
+                [Faces.Left] = textures[14, 0],
+                [Faces.Right] = textures[14, 0],
+                [Faces.Top] = textures[14, 0],
+                [Faces.Bottom] = textures[14, 0],
+            },
+            [BlockType.IronOre] = new Dictionary<Faces, Vector2[]>()
+            {
+                [Faces.Front] = textures[15, 0],
+                [Faces.Back] = textures[15, 0],
+                [Faces.Left] = textures[15, 0],
+                [Faces.Right] = textures[15, 0],
+                [Faces.Top] = textures[15, 0],
+                [Faces.Bottom] = textures[15, 0],
+            },
+            [BlockType.GoldOre] = new Dictionary<Faces, Vector2[]>()
+            {
+                [Faces.Front] = textures[0, 1],
+                [Faces.Back] = textures[0, 1],
+                [Faces.Left] = textures[0, 1],
+                [Faces.Right] = textures[0, 1],
+                [Faces.Top] = textures[0, 1],
+                [Faces.Bottom] = textures[0, 1],
+            },
+            [BlockType.DiamondOre] = new Dictionary<Faces, Vector2[]>()
+            {
+                [Faces.Front] = textures[1, 1],
+                [Faces.Back] = textures[1, 1],
+                [Faces.Left] = textures[1, 1],
+                [Faces.Right] = textures[1, 1],
+                [Faces.Top] = textures[1, 1],
+                [Faces.Bottom] = textures[1, 1],
+            },
             [BlockType.Sapling] = new Dictionary<Faces, Vector2[]>()
             {
                 [Faces.Inside] =
@@ -120,7 +183,7 @@ namespace minecrap.world
                     .. textures[0, 15],
                     .. textures[0, 15],
                 ]
-            }
+            },
         };
     }
 }

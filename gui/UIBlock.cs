@@ -12,14 +12,14 @@ namespace minecrap.gui
         private Texture texture;
         private BlockType blockType;
 
-        public UIBlock(BlockType blockType, Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color? color = null)
+        public UIBlock(BlockType blockType, Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, bool clickable, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color? color = null)
         {
             texture = new Texture("textures");
-            SetBlockType(blockType);
             this.relSize = relSize;
             this.offSize = offSize;
             this.relPos = relPos;
             this.offPos = offPos;
+            this.clickable = clickable;
             this.aspectRatio = aspectRatio;
             this.dominantAxis = dominantAxis;
             this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
@@ -123,14 +123,19 @@ namespace minecrap.gui
             }
         }
 
-        public override void Render(ShaderProgram shaderProgram)
+        protected override void OnRender(ShaderProgram shaderProgram)
         {
             shaderProgram.Bind();
             texture.Bind();
             vao.Bind();
             ebo.Bind();
             GL.DrawElements(PrimitiveType.Triangles, 18, DrawElementsType.UnsignedInt, 0);
-            base.Render(shaderProgram);
+            base.OnRender(shaderProgram);
+        }
+
+        public override void OnClick()
+        {
+            Player.instance.GrabItem(blockType);
         }
     }
 }
