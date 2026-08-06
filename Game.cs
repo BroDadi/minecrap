@@ -56,6 +56,8 @@ namespace minecrap
             Faces.Top,
             Faces.Bottom
         ];
+        public static Texture blocks;
+        public static Texture font;
         public static Dictionary<Faces, float> shadeSides = new()
         {
             [Faces.Front] = 0.85f,
@@ -103,6 +105,8 @@ namespace minecrap
             Title = "MINECRAP!!!";
 
             shaderProgram = new ShaderProgram("default.vert", "default.frag");
+            blocks = new Texture("textures");
+            font = new Texture("font");
 
             world = new World(new Random().Next(int.MinValue, int.MaxValue), shaderProgram);
             Vector2i worldSize = new(16, 16);
@@ -135,11 +139,13 @@ namespace minecrap
             fullInv.AddChild(invGrid);
             invGrid.AddBlocks(fullInventory);
             fullInv.Disable();
-            
+
+            UIText testText = new(0.03f, 0, new Vector2(0f, 1f), Vector2.Zero, "Minecrap v0.0.7");
             
             gui.AddToGUI(image);
             gui.AddToGUI(inv);
             gui.AddToGUI(fullInv);
+            gui.AddToGUI(testText);
 
             Vector2i spawnPos = new(worldSize.X * 8, worldSize.Y * 8);
             Vector3 playerPos = world.GetHighestBlock(spawnPos).pos + new Vector3(0, 1.5f, 0);

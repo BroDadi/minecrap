@@ -9,7 +9,7 @@ namespace minecrap.gui
 
         public GUI()
         {
-            elements = [];
+            elements = new List<UIElement>();
         }
 
         public void AddToGUI(UIElement element)

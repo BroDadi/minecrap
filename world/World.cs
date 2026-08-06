@@ -44,7 +44,7 @@ namespace minecrap.world
         public World(int seed, ShaderProgram shaderProgram)
         {
             this.shaderProgram = shaderProgram;
-            texture = new Texture("textures");
+            texture = Game.blocks;
             instance = this;
             updateSchedule = new PriorityQueue<Block, ulong>();
             chunksToUpdate = new HashSet<Chunk>();
@@ -202,7 +202,7 @@ namespace minecrap.world
 
         public Dictionary<Faces, Block?> GetNeighbors(Block block)
         {
-            Dictionary<Faces, Block?> result = [];
+            Dictionary<Faces, Block?> result = new();
             foreach (Faces face in neighborByFace.Keys)
             {
                 result[face] = GetNeighbor(block, face);
@@ -219,7 +219,7 @@ namespace minecrap.world
         
         public List<Block> GetSolidBlocksAroundCollider(Collider collider)
         {
-            List<Block> blocks = [];
+            List<Block> blocks = new();
             for (int x = (int)Math.Floor(collider.pos.X - collider.size.X / 2); x <= (int)Math.Ceiling(collider.pos.X + collider.size.X / 2); x++)
             {
                 for (int y = (int)Math.Floor(collider.pos.Y - collider.size.Y / 2); y <= (int)Math.Ceiling(collider.pos.Y + collider.size.Y / 2); y++)
@@ -236,7 +236,7 @@ namespace minecrap.world
 
         public List<Block> GetBlocksInZone(Vector3i center, Vector3i bounds)
         {
-            List<Block> blocks = [];
+            List<Block> blocks = new();
             for (int x = center.X - (bounds.X - 1) / 2; x <= center.X + bounds.X / 2; x++)
             {
                 for (int y = center.Y - (bounds.Y - 1) / 2; y <= center.Y + bounds.Y / 2; y++)
@@ -253,7 +253,7 @@ namespace minecrap.world
 
         public List<Block> GetWaterAroundCollider(Collider collider)
         {
-            List<Block> blocks = [];
+            List<Block> blocks = new();
             for (int x = (int)Math.Floor(collider.pos.X - collider.size.X / 2); x <= (int)Math.Ceiling(collider.pos.X + collider.size.X / 2); x++)
             {
                 for (int y = (int)Math.Floor(collider.pos.Y - collider.size.Y / 2); y <= (int)Math.Ceiling(collider.pos.Y + collider.size.Y / 2); y++)

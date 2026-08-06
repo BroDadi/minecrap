@@ -117,6 +117,11 @@ namespace minecrap
                     if (!CheckCollision(pos + new Vector3(move.X, 0, 0))) pos += new Vector3(move.X, 0, 0);
                     if (!CheckCollision(pos + new Vector3(0, 0, move.Z))) pos += new Vector3(0, 0, move.Z);
                 }
+                if ((input.IsKeyDown(Keys.Space) || input.IsKeyDown(Keys.KeyPad0)) && (onGround || inWater))
+                {
+                    speedY = inWater ? Math.Min(speedY + swimUpSpeed * deltaTime, 3) : jumpForce;
+                    onGround = false;
+                }
             }
 
             inWater = CheckWater(pos);
@@ -132,11 +137,6 @@ namespace minecrap
             {
                 onGround = speedY < 0;
                 speedY = 0;
-            }
-            if ((input.IsKeyDown(Keys.Space) || input.IsKeyDown(Keys.KeyPad0)) && (onGround || inWater))
-            {
-                speedY = inWater ? Math.Min(speedY + swimUpSpeed * deltaTime, 3) : jumpForce;
-                onGround = false;
             }
 
             Camera.instance.pos = pos + new Vector3(0, 0.5f, 0);

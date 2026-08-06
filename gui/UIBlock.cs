@@ -9,12 +9,10 @@ namespace minecrap.gui
     internal class UIBlock : UIElement
     {
         private Dictionary<Faces, Vector2[]> textures;
-        private Texture texture;
         private BlockType blockType;
 
         public UIBlock(BlockType blockType, Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, bool clickable, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color? color = null)
         {
-            texture = new Texture("textures");
             this.relSize = relSize;
             this.offSize = offSize;
             this.relPos = relPos;
@@ -126,7 +124,7 @@ namespace minecrap.gui
         protected override void OnRender(ShaderProgram shaderProgram)
         {
             shaderProgram.Bind();
-            texture.Bind();
+            Game.blocks.Bind();
             vao.Bind();
             ebo.Bind();
             GL.DrawElements(PrimitiveType.Triangles, 18, DrawElementsType.UnsignedInt, 0);
