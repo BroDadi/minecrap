@@ -6,19 +6,20 @@ namespace minecrap.gui
 {
     internal class UIImage : UIElement
     {
-        private Texture texture;
+        protected Texture texture;
 
-        public UIImage(Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, Texture texture, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color? color = null, bool clickable = false)
+        public UIImage(Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, Texture? texture = null, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color? color = null, bool clickable = false)
         {
             this.relSize = relSize;
             this.offSize = offSize;
             this.relPos = relPos;
             this.offPos = offPos;
-            this.texture = texture;
             this.aspectRatio = aspectRatio;
             this.dominantAxis = dominantAxis;
             this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
             this.color = color ?? new Color(255, 255, 255, 255);
+            this.texture = texture ?? Game.blank;
+            this.clickable = clickable;
         }
 
         public override void GenElement()

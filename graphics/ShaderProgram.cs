@@ -28,18 +28,7 @@ namespace minecrap.graphics
 
         public static string LoadShaderSource(string filePath)
         {
-            string shaderSource = "";
-            try
-            {
-                using (StreamReader reader = new StreamReader("shaders/" + filePath))
-                {
-                    shaderSource = reader.ReadToEnd();
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            string shaderSource = File.ReadAllText("shaders/" + filePath);
             return shaderSource;
         }
 

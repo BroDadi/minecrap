@@ -11,7 +11,7 @@ namespace minecrap.gui
         private Dictionary<Faces, Vector2[]> textures;
         private BlockType blockType;
 
-        public UIBlock(BlockType blockType, Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, bool clickable, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color? color = null)
+        public UIBlock(BlockType blockType, Vector2 relSize, Vector2 offSize, Vector2 relPos, Vector2 offPos, float aspectRatio = 0f, DomAxis dominantAxis = DomAxis.None, Vector2? pivotPoint = null, Color? color = null, bool clickable = false)
         {
             this.relSize = relSize;
             this.offSize = offSize;

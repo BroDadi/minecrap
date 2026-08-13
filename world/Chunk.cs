@@ -199,6 +199,41 @@ namespace minecrap.world
             }
         }
 
+        public void LoadBlocks(string file)
+        {
+            byte[] chunkData = File.ReadAllBytes(file);
+
+            for (int y = 0; y < World.height; y++)
+            {
+                for (int z = 0; z < World.chunkSize; z++)
+                {
+                    for (int x = 0; x < World.chunkSize; x++)
+                    {
+                        BlockType type = (BlockType)chunkData[y * World.chunkSize * World.chunkSize + z * World.chunkSize + x];
+                        chunkBlocks[x, y, z] = new Block(new Vector3i(x + blockOffset.X, y, z + blockOffset.Z), type);
+                    }
+                }
+            }
+        }
+
+        public void SaveBlocks(string file)
+        {
+            byte[] chunkData = new byte[chunkBlocks.Length];
+            
+            for (int y = 0; y < World.height; y++)
+            {
+                for (int z = 0; z < World.chunkSize; z++)
+                {
+                    for (int x = 0; x < World.chunkSize; x++)
+                    {
+                        chunkData[y * World.chunkSize * World.chunkSize + z * World.chunkSize + x] = (byte)chunkBlocks[x, y, z].blockType;
+                    }
+                }
+            }
+
+            File.WriteAllBytes(file, chunkData);
+        }
+
         public void GenLighting()
         {
             for (int x = 0; x < World.chunkSize; x++)

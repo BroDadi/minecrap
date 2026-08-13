@@ -1,3 +1,4 @@
+using System.Text;
 using minecrap.graphics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -7,13 +8,18 @@ namespace minecrap.gui
     internal class UIText : UIElement
     {
         private string text;
+        private TextAlignmentH txtAlignH;
+        private TextAlignmentV txtAlignV;
 
-        public UIText(float relCharSize, float offCharSize, Vector2 relPos, Vector2 offPos, string text, Color? color = null)
+        public UIText(float relCharSize, float offCharSize, Vector2 relPos, Vector2 offPos, string text, TextAlignmentH txtAlignH, TextAlignmentV txtAlignV, Color? color = null)
         {
             this.relPos = relPos;
             this.offPos = offPos;
             this.color = color ?? new Color(255, 255, 255, 255);
             this.text = text;
+            this.txtAlignH = txtAlignH;
+            this.txtAlignV = txtAlignV;
+
             relSize = new Vector2(relCharSize, relCharSize);
             offSize = new Vector2(offCharSize, offCharSize);
             aspectRatio = 1;
@@ -25,37 +31,75 @@ namespace minecrap.gui
             List<Vector3> vertexes = new();
             List<Vector2> texCoords = new();
             List<uint> indexes = new();
-            Vector2 startPos = CalculatePos() / Game.instance.screenSize;
+            Vector2 centerPos = CalculatePos() / Game.instance.screenSize;
             Vector2 charSize = CalculateSize() / Game.instance.screenSize;
-            startPos -= charSize / 2f;
-            Vector2 currPos = startPos;
 
-            uint vertexCount = 0;
+            List<string> lines = new();
+            StringBuilder sb = new();
+
             foreach (char c in text)
             {
                 if (c == '\n')
                 {
-                    currPos.Y -= charSize.Y;
-                    currPos.X = startPos.X;
+                    lines.Add(sb.ToString());
+                    sb.Clear();
                 }
                 else
                 {
-                    if (FontData.coordsByChar.ContainsKey(c))
-                    {
-                        vertexes.Add(new Vector3(currPos.X, currPos.Y, 0));
-                        vertexes.Add(new Vector3(currPos.X + charSize.X, currPos.Y, 0));
-                        vertexes.Add(new Vector3(currPos.X + charSize.X, currPos.Y - charSize.Y, 0));
-                        vertexes.Add(new Vector3(currPos.X, currPos.Y - charSize.Y, 0));
-                        texCoords.AddRange(FontData.coordsByChar[c]);
-                        indexes.Add(0 + vertexCount);
-                        indexes.Add(1 + vertexCount);
-                        indexes.Add(2 + vertexCount);
-                        indexes.Add(2 + vertexCount);
-                        indexes.Add(3 + vertexCount);
-                        indexes.Add(0 + vertexCount);
-                        vertexCount += 4;
-                        currPos.X += charSize.X;
-                    }
+                    if (FontData.coordsByChar.ContainsKey(c)) sb.Append(c);
+                    else sb.Append(' ');
+                }
+            }
+            if (sb.Length != 0) lines.Add(sb.ToString());
+
+            float startY = 0;
+            switch (txtAlignV)
+            {
+                case TextAlignmentV.Top:
+                    startY = centerPos.Y;
+                    break;
+                case TextAlignmentV.Middle:
+                    startY = centerPos.Y + lines.Count / 2f * charSize.Y;
+                    break;
+                case TextAlignmentV.Bottom:
+                    startY = centerPos.Y + lines.Count * charSize.Y;
+                    break;
+            }
+            startY -= charSize.Y / 2f;
+
+            uint vertexCount = 0;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                float startX = 0;
+                switch (txtAlignH)
+                {
+                    case TextAlignmentH.Left:
+                        startX = centerPos.X;
+                        break;
+                    case TextAlignmentH.Center:
+                        startX = centerPos.X - lines[i].Length / 2f * charSize.X;
+                        break;
+                    case TextAlignmentH.Right:
+                        startX = centerPos.X - lines[i].Length * charSize.X;
+                        break;
+                }
+                startX -= charSize.X / 2f;
+
+                for (int j = 0; j < lines[i].Length; j++)
+                {
+                    Vector2 letterPos = new(startX + j * charSize.X, startY - i * charSize.Y);
+                    vertexes.Add(new Vector3(letterPos.X, letterPos.Y, 0));
+                    vertexes.Add(new Vector3(letterPos.X + charSize.X, letterPos.Y, 0));
+                    vertexes.Add(new Vector3(letterPos.X + charSize.X, letterPos.Y - charSize.Y, 0));
+                    vertexes.Add(new Vector3(letterPos.X, letterPos.Y - charSize.Y, 0));
+                    texCoords.AddRange(FontData.coordsByChar[lines[i][j]]);
+                    indexes.Add(0 + vertexCount);
+                    indexes.Add(1 + vertexCount);
+                    indexes.Add(2 + vertexCount);
+                    indexes.Add(2 + vertexCount);
+                    indexes.Add(3 + vertexCount);
+                    indexes.Add(0 + vertexCount);
+                    vertexCount += 4;
                 }
             }
 

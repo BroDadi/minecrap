@@ -15,9 +15,17 @@ namespace minecrap.graphics
             this.a = a;
         }
 
+        public Color(byte r, byte g, byte b)
+        {
+            this.r = r;
+            this.g = g;
+            this.b = b;
+            a = 255;
+        }
+
         public static Color FromLighting(byte light)
         {
-            if (light > 15) return new Color(255, 255, 255, 255);
+            if (light > 15) return new Color(255, 255, 255);
             else
             {
                 byte color = (byte)(60 + light * 13);

@@ -104,6 +104,7 @@ namespace minecrap.gui
             colorVBO.Delete();
             vao.Delete();
             ebo.Delete();
+            parent?.children.Remove(this);
         }
 
         public virtual void Disable() => enabled = false;

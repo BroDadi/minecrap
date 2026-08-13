@@ -36,7 +36,15 @@ namespace minecrap.gui
             {
                 int x = i % width;
                 int y = i / width;
-                UIBlock block = new(blockTypes[i], blockSize, Vector2.Zero, new Vector2((x - width / 2f + 0.5f) / width, (height / 2f - y - 0.5f) / height), Vector2.Zero, true, 1f);
+                UIBlock block = new
+                (
+                    blockType: blockTypes[i],
+                    relSize: blockSize, offSize: Vector2.Zero,
+                    relPos: new Vector2((x - width / 2f + 0.5f) / width, (height / 2f - y - 0.5f) / height), offPos: Vector2.Zero,
+                    clickable: true,
+                    aspectRatio: 1f,
+                    dominantAxis: DomAxis.Height
+                );
                 AddChild(block);
             }
         }

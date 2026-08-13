@@ -18,11 +18,13 @@ namespace minecrap
         private Player player;
         private World world;
         private GUI gui;
+        public GUI pauseGUI;
         private UIBlock[] invBlocks;
         private UIImage select;
-        private UIPanel fullInv;
+        private UIImage fullInv;
         private Vector3 skyColor;
         private bool inInventory;
+        private bool paused;
         public static HashSet<BlockType> transparentBlocks =
         [
             BlockType.Water,
@@ -58,6 +60,7 @@ namespace minecrap
         ];
         public static Texture blocks;
         public static Texture font;
+        public static Texture blank;
         public static Dictionary<Faces, float> shadeSides = new()
         {
             [Faces.Front] = 0.85f,
@@ -97,6 +100,7 @@ namespace minecrap
             GL.Viewport(0, 0, e.Width, e.Height);
             screenSize = new Vector2i(e.Width, e.Height);
             gui?.RebuildGUI();
+            pauseGUI?.RebuildGUI();
         }
 
         protected override void OnLoad()
@@ -107,6 +111,7 @@ namespace minecrap
             shaderProgram = new ShaderProgram("default.vert", "default.frag");
             blocks = new Texture("textures");
             font = new Texture("font");
+            blank = new Texture("blank");
 
             world = new World(new Random().Next(int.MinValue, int.MaxValue), shaderProgram);
             Vector2i worldSize = new(16, 16);
@@ -121,31 +126,97 @@ namespace minecrap
 
             gui = new GUI();
             
-            UIImage image = new(new Vector2(0.025f, 0.025f), Vector2.Zero, new Vector2(0.5f, 0.5f), Vector2.Zero, new Texture("crosshair"), 1f, DomAxis.Height);
+            UIImage image = new
+            (
+                relSize: new Vector2(0.025f, 0.025f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.5f), offPos: Vector2.Zero,
+                texture: new Texture("crosshair"),
+                aspectRatio: 1f, dominantAxis: DomAxis.Height
+            );
             
-            UIImage inv = new(new Vector2(0.2f, 0.066f), Vector2.Zero, new Vector2(0.5f, 0.01f), Vector2.Zero, new Texture("inventory"), 9f, DomAxis.Height, new Vector2(0.5f, 0f));
+            UIImage inv = new
+            (
+                relSize: new Vector2(0.2f, 0.066f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.01f), offPos: Vector2.Zero,
+                texture: new Texture("inventory"),
+                aspectRatio: 9f, dominantAxis: DomAxis.Height,
+                pivotPoint: new Vector2(0.5f, 0f)
+            );
+
             invBlocks = new UIBlock[9]; 
             for (int i = 0; i < 9; i++)
             {
-                UIBlock invBlock = new(BlockType.Dirt, new Vector2(7/83f, 7f/9f), Vector2.Zero, new Vector2((i - 4) * 16 / 146f, 0f), Vector2.Zero, false, 1, DomAxis.Height);
+                UIBlock invBlock = new
+                (
+                    blockType: BlockType.Dirt,
+                    relSize: new Vector2(7/83f, 7f/9f), offSize: Vector2.Zero,
+                    relPos: new Vector2((i - 4) * 16 / 146f, 0f), offPos: Vector2.Zero,
+                    aspectRatio: 1, dominantAxis: DomAxis.Height,
+                    clickable: true
+                );
                 inv.AddChild(invBlock);
                 invBlocks[i] = invBlock;
             }
-            select = new(new Vector2(10/73f, 10/9f), Vector2.Zero, new Vector2(-4/9f, 0f), Vector2.Zero, new Texture("select"), 1, DomAxis.Height);
+            select = new
+            (
+                relSize: new Vector2(10/73f, 10/9f), offSize: Vector2.Zero,
+                relPos: new Vector2(-4/9f, 0f),  offPos: Vector2.Zero,
+                texture: new Texture("select"),
+                aspectRatio: 1,
+                dominantAxis: DomAxis.Height
+            );
             inv.AddChild(select);
 
-            fullInv = new UIPanel(new Vector2(0.5f, 0.5f), Vector2.Zero, new Vector2(0.5f, 0.5f), Vector2.Zero, new Color(127, 127, 127, 127), 9f/4f, DomAxis.Height);
-            UIBlockGrid invGrid = new(new Vector2(1, 1), Vector2.Zero, Vector2.Zero, Vector2.Zero, 9, 4, DomAxis.Height);
+            fullInv = new UIImage
+            (
+                relSize: new Vector2(0.5f, 0.5f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.5f), offPos: Vector2.Zero,
+                color: new Color(127, 127, 127, 127),
+                aspectRatio: 9f/4f,
+                dominantAxis: DomAxis.Height
+            );
+
+            UIBlockGrid invGrid = new
+            (
+                relSize: new Vector2(1, 1), offSize: Vector2.Zero,
+                relPos: Vector2.Zero, offPos: Vector2.Zero,
+                width: 9, height: 4,
+                dominantAxis: DomAxis.Height
+            );
             fullInv.AddChild(invGrid);
             invGrid.AddBlocks(fullInventory);
             fullInv.Disable();
 
-            UIText testText = new(0.03f, 0, new Vector2(0f, 1f), Vector2.Zero, "Minecrap v0.0.7");
+            UIText verText = new
+            (
+                relCharSize: 0.03f, offCharSize: 0,
+                relPos: new Vector2(0f, 1f), offPos: new Vector2(3, -3),
+                text: "Minecrap v0.0.7", txtAlignH: TextAlignmentH.Left, txtAlignV: TextAlignmentV.Top
+            );
             
             gui.AddToGUI(image);
             gui.AddToGUI(inv);
             gui.AddToGUI(fullInv);
-            gui.AddToGUI(testText);
+            gui.AddToGUI(verText);
+
+            pauseGUI = new GUI();
+            UIImage bg = new
+            (
+                relSize: new Vector2(1f, 1f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.5f), offPos: Vector2.Zero,
+                color: new Color(0, 0, 0, 127)
+            );
+            UIText pauseText = new
+            (
+                relCharSize: 0.05f, offCharSize: 0f,
+                relPos: new Vector2(0.5f, 0.75f), offPos: Vector2.Zero,
+                text: "PAUSED", txtAlignH:TextAlignmentH.Center, txtAlignV: TextAlignmentV.Middle
+            );
+
+            pauseGUI.AddToGUI(bg);
+            pauseGUI.AddToGUI(pauseText);
+
+            pauseGUI.Disable();
 
             Vector2i spawnPos = new(worldSize.X * 8, worldSize.Y * 8);
             Vector3 playerPos = world.GetHighestBlock(spawnPos).pos + new Vector3(0, 1.5f, 0);
@@ -185,7 +256,10 @@ namespace minecrap
             projection = Matrix4.CreateOrthographicOffCenter(0, 1, 0, 1, -1, 1);
             GL.UniformMatrix4(viewLocation, true, ref view);
             GL.UniformMatrix4(projectionLocation, true, ref projection);
+
             gui.Render(shaderProgram);
+            pauseGUI.Render(shaderProgram);
+
             GL.Enable(EnableCap.DepthTest);
 
             Context.SwapBuffers();
@@ -215,6 +289,7 @@ namespace minecrap
         public void LockCursor() => CursorState = CursorState.Grabbed;
         public void UnlockCursor() => CursorState = CursorState.Normal;
         public bool IsCursorLocked() => CursorState == CursorState.Grabbed;
+
         public void ToggleFullInv()
         {
             if (inInventory)
@@ -228,6 +303,18 @@ namespace minecrap
                 fullInv.Enable();
             }
             inInventory = !inInventory;
+        }
+        
+        public void TogglePause()
+        {
+            if (inInventory) ToggleFullInv();
+            else
+            {
+                if (paused)
+                {
+                    LockCursor();
+                }
+            }
         }
     }
 }

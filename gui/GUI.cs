@@ -6,11 +6,15 @@ namespace minecrap.gui
     internal class GUI
     {
         private List<UIElement> elements;
+        private bool enabled = true;
 
         public GUI()
         {
             elements = new List<UIElement>();
         }
+
+        public void Enable() => enabled = true;
+        public void Disable() => enabled = false;
 
         public void AddToGUI(UIElement element)
         {
@@ -28,6 +32,8 @@ namespace minecrap.gui
 
         public void Render(ShaderProgram shaderProgram)
         {
+            if (!enabled) return;
+
             foreach (UIElement element in elements)
             {
                 element.Render(shaderProgram);
@@ -36,6 +42,8 @@ namespace minecrap.gui
 
         public void Click(Vector2 cursor)
         {
+            if (!enabled) return;
+
             foreach (UIElement element in elements)
             {
                 UIElement? clicked = ClickTraversal(element, cursor);

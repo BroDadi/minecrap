@@ -51,4 +51,18 @@ namespace minecrap.gui
             return result;
         }
     }
+
+    internal enum TextAlignmentH
+    {
+        Left,
+        Center,
+        Right
+    }
+    
+    internal enum TextAlignmentV
+    {
+        Top,
+        Middle,
+        Bottom
+    }
 }
