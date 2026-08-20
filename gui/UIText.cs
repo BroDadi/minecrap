@@ -15,7 +15,7 @@ namespace minecrap.gui
         {
             this.relPos = relPos;
             this.offPos = offPos;
-            this.color = color ?? new Color(255, 255, 255, 255);
+            this.color = color ?? new Color(255, 255, 255);
             this.text = text;
             this.txtAlignH = txtAlignH;
             this.txtAlignV = txtAlignV;

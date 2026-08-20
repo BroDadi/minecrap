@@ -18,7 +18,7 @@ namespace minecrap.gui
             this.textColor = textColor ?? new Color(255, 255, 255);
             if (text != "")
             {
-                txt = new(relTextSize, offTextSize, new Vector2(0.5f, 0.5f), Vector2.Zero, text, TextAlignmentH.Center, TextAlignmentV.Middle, textColor);
+                txt = new(relCharSize: relTextSize, offTextSize, Vector2.Zero, Vector2.Zero, text, TextAlignmentH.Center, TextAlignmentV.Middle, textColor);
                 AddChild(txt);
             }
         }
@@ -26,7 +26,7 @@ namespace minecrap.gui
         public void SetText(string str)
         {
             if (str == "") txt.Delete();
-            else if (txt == null) txt = new(relTextSize, offTextSize, new Vector2(0.5f, 0.5f), Vector2.Zero, str, TextAlignmentH.Center, TextAlignmentV.Middle, textColor);
+            else if (txt == null) txt = new(relTextSize, offTextSize, Vector2.Zero, Vector2.Zero, str, TextAlignmentH.Center, TextAlignmentV.Middle, textColor);
             else txt.SetText(str);
         }
     }

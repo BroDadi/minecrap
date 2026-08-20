@@ -17,7 +17,7 @@ namespace minecrap.gui
             this.offPos = offPos;
             this.dominantAxis = dominantAxis;
             this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
-            this.color = color ?? new Color(255, 255, 255, 255);
+            this.color = color ?? new Color(255, 255, 255);
             this.width = width;
             this.height = height;
             aspectRatio = (float)width / height;
@@ -36,15 +36,17 @@ namespace minecrap.gui
             {
                 int x = i % width;
                 int y = i / width;
+                BlockType type = blockTypes[i];
                 UIBlock block = new
                 (
-                    blockType: blockTypes[i],
+                    blockType: type,
                     relSize: blockSize, offSize: Vector2.Zero,
                     relPos: new Vector2((x - width / 2f + 0.5f) / width, (height / 2f - y - 0.5f) / height), offPos: Vector2.Zero,
                     clickable: true,
                     aspectRatio: 1f,
                     dominantAxis: DomAxis.Height
                 );
+                block.OnClick = () => Player.instance.GrabItem(type);
                 AddChild(block);
             }
         }

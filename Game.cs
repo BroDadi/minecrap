@@ -1,6 +1,7 @@
 using minecrap.graphics;
 using minecrap.gui;
 using minecrap.world;
+using NativeFileDialogSharp;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -18,13 +19,13 @@ namespace minecrap
         private Player player;
         private World world;
         private GUI gui;
-        public GUI pauseGUI;
+        private GUI pauseGUI;
         private UIBlock[] invBlocks;
         private UIImage select;
         private UIImage fullInv;
         private Vector3 skyColor;
-        private bool inInventory;
-        private bool paused;
+        public bool inInventory;
+        public bool paused;
         public static HashSet<BlockType> transparentBlocks =
         [
             BlockType.Water,
@@ -61,6 +62,7 @@ namespace minecrap
         public static Texture blocks;
         public static Texture font;
         public static Texture blank;
+        public static Texture btnTexture;
         public static Dictionary<Faces, float> shadeSides = new()
         {
             [Faces.Front] = 0.85f,
@@ -112,6 +114,7 @@ namespace minecrap
             blocks = new Texture("textures");
             font = new Texture("font");
             blank = new Texture("blank");
+            btnTexture = new Texture("button");
 
             world = new World(new Random().Next(int.MinValue, int.MaxValue), shaderProgram);
             Vector2i worldSize = new(16, 16);
@@ -191,7 +194,7 @@ namespace minecrap
             (
                 relCharSize: 0.03f, offCharSize: 0,
                 relPos: new Vector2(0f, 1f), offPos: new Vector2(3, -3),
-                text: "Minecrap v0.0.7", txtAlignH: TextAlignmentH.Left, txtAlignV: TextAlignmentV.Top
+                text: "minecrap v0.0.7", txtAlignH: TextAlignmentH.Left, txtAlignV: TextAlignmentV.Top
             );
             
             gui.AddToGUI(image);
@@ -210,11 +213,59 @@ namespace minecrap
             (
                 relCharSize: 0.05f, offCharSize: 0f,
                 relPos: new Vector2(0.5f, 0.75f), offPos: Vector2.Zero,
-                text: "PAUSED", txtAlignH:TextAlignmentH.Center, txtAlignV: TextAlignmentV.Middle
+                text: "PAUSED", txtAlignH: TextAlignmentH.Center, txtAlignV: TextAlignmentV.Middle
             );
+            UIButton resumeBtn = new
+            (
+                relSize: new Vector2(0.35f, 0.09f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.6f), offPos: Vector2.Zero,
+                aspectRatio: 5f, dominantAxis: DomAxis.Height,
+                texture: btnTexture, text: "resume",
+                relTextSize: 0.4f
+            );
+            resumeBtn.OnClick = () => TogglePause();
+
+            UIButton saveBtn = new
+            (
+                relSize: new Vector2(0.35f, 0.09f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.5f), offPos: Vector2.Zero,
+                aspectRatio: 5f, dominantAxis: DomAxis.Height,
+                texture: btnTexture, text: "save world",
+                relTextSize: 0.4f
+            );
+            saveBtn.OnClick = () =>
+            {
+                DialogResult result = Dialog.FolderPicker(Path.Combine(Environment.CurrentDirectory, "worlds"));
+                if (result.IsOk) World.instance.SaveWorld(result.Path);
+                TogglePause();
+            };
+
+            UIButton loadBtn = new
+            (
+                relSize: new Vector2(0.35f, 0.09f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.4f), offPos: Vector2.Zero,
+                aspectRatio: 5f, dominantAxis: DomAxis.Height,
+                texture: btnTexture, text: "load world",
+                relTextSize: 0.4f
+            );
+            loadBtn.OnClick = () =>
+            {
+                DialogResult result = Dialog.FolderPicker(Path.Combine(Environment.CurrentDirectory, "worlds"));
+                if (result.IsOk)
+                {
+                    world.LoadWorld(result.Path);
+                    Vector2i spawnPos = new(world.worldSize.X * 8, world.worldSize.Y * 8);
+                    Vector3 playerPos = world.GetHighestBlock(spawnPos).pos + new Vector3(0, 1.5f, 0);
+                    cam = new Camera(playerPos + new Vector3(0f, 0.5f, 0f));
+                    player = new Player(playerPos);
+                }
+            };
 
             pauseGUI.AddToGUI(bg);
             pauseGUI.AddToGUI(pauseText);
+            pauseGUI.AddToGUI(resumeBtn);
+            pauseGUI.AddToGUI(saveBtn);
+            pauseGUI.AddToGUI(loadBtn);
 
             pauseGUI.Disable();
 
@@ -276,6 +327,7 @@ namespace minecrap
             world.Update(args);
 
             if (inInventory && mouse.IsButtonPressed(MouseButton.Left)) gui.Click(new Vector2(mouse.Position.X, screenSize.Y - mouse.Position.Y));
+            if (paused && mouse.IsButtonPressed(MouseButton.Left)) pauseGUI.Click(new Vector2(mouse.Position.X, screenSize.Y - mouse.Position.Y));
         }
 
         public void UpdateInvBlockType(int index, BlockType blockType) => invBlocks[index].SetBlockType(blockType);
@@ -307,14 +359,17 @@ namespace minecrap
         
         public void TogglePause()
         {
-            if (inInventory) ToggleFullInv();
+            if (paused)
+            {
+                LockCursor();
+                pauseGUI.Disable();
+            }
             else
             {
-                if (paused)
-                {
-                    LockCursor();
-                }
+                UnlockCursor();
+                pauseGUI.Enable();
             }
+            paused = !paused;
         }
     }
 }

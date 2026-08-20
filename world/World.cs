@@ -44,6 +44,7 @@ namespace minecrap.world
         public World(int seed, ShaderProgram shaderProgram)
         {
             this.shaderProgram = shaderProgram;
+            this.seed = seed;
             texture = Game.blocks;
             instance = this;
             updateSchedule = new PriorityQueue<Block, ulong>();
@@ -133,6 +134,62 @@ namespace minecrap.world
                 {
                     chunks[x, z].GenFaces();
                     chunks[x, z].BuildChunk();
+                }
+            }
+        }
+
+        public void SaveWorld(string path)
+        {
+            string[] data =
+            {
+                $"seed: {seed}",
+                $"ticks: {ticks}",
+                $"timeAfterLastUpdate: {timeAfterLastUpdate}",
+                $"worldSizeX: {worldSize.X}",
+                $"worldSizeY: {worldSize.Y}",
+            };
+            File.WriteAllLines(Path.Combine(path, "data.txt"), data);
+
+            foreach (Chunk chunk in chunks)
+            {
+                string chunkPath = Path.Combine(path, $"{chunk.chunkPos.X} {chunk.chunkPos.Y}.mcrap");
+                chunk.SaveBlocks(chunkPath);
+            }
+        }
+
+        public void LoadWorld(string path)
+        {
+            if (File.Exists(Path.Join(path, "data.txt")))
+            {
+                string[] dataFile = File.ReadAllLines(Path.Join(path, "data.txt"));
+                Dictionary<string, string> data = new();
+
+                foreach (string str in dataFile)
+                {
+                    string[] a = str.Split(": ");
+                    if (a.Length >= 2) data[a[0]] = a[1];
+                }
+
+                seed = Convert.ToInt32(data["seed"]);
+                ticks = Convert.ToUInt64(data["ticks"]);
+                timeAfterLastUpdate = Convert.ToSingle(data["timeAfterLastUpdate"]);
+                worldSize = new Vector2i(Convert.ToInt32(data["worldSizeX"]), Convert.ToInt32(data["worldSizeY"]));
+
+                for (int x = 0; x < worldSize.X; x++)
+                {
+                    for (int z = 0; z < worldSize.Y; z++)
+                    {
+                        chunks[x, z] = new Chunk(new Vector2i(x, z), Path.Join(path, $"{x} {z}.mcrap"));
+                    }
+                }
+
+                for (int x = 0; x < worldSize.X; x++)
+                {
+                    for (int z = 0; z < worldSize.Y; z++)
+                    {
+                        chunks[x, z].GenFaces();
+                        chunks[x, z].BuildChunk();
+                    }
                 }
             }
         }
@@ -270,6 +327,8 @@ namespace minecrap.world
 
         public void Update(FrameEventArgs e)
         {
+            if (Game.instance.paused) return;
+            
             float deltaTime = (float)e.Time;
             timeAfterLastUpdate += deltaTime;
             if (timeAfterLastUpdate >= tick)

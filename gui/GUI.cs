@@ -48,7 +48,7 @@ namespace minecrap.gui
             {
                 UIElement? clicked = ClickTraversal(element, cursor);
 
-                if (clicked != null)
+                if (clicked != null && clicked.OnClick != null)
                 {
                     clicked.OnClick();
                     break;

@@ -56,6 +56,14 @@ namespace minecrap
 
         private void InputController(KeyboardState input, MouseState mouse, FrameEventArgs e)
         {
+            if (input.IsKeyPressed(Keys.Escape))
+            {
+                if (Game.instance.inInventory) Game.instance.ToggleFullInv();
+                else Game.instance.TogglePause();
+            }
+            
+            if (Game.instance.paused) return;
+
             if (input.IsKeyPressed(Keys.E))
             {
                 Game.instance.ToggleFullInv();
@@ -169,6 +177,7 @@ namespace minecrap
             }
             return false;
         }
+        
         private void SelectBlock(int num)
         {
             selected = num;

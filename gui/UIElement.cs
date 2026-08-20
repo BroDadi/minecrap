@@ -109,6 +109,6 @@ namespace minecrap.gui
 
         public virtual void Disable() => enabled = false;
         public virtual void Enable() => enabled = true;
-        public virtual void OnClick() {}
+        public Action? OnClick;
     }
 }

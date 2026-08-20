@@ -17,7 +17,7 @@ namespace minecrap.gui
             this.aspectRatio = aspectRatio;
             this.dominantAxis = dominantAxis;
             this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
-            this.color = color ?? new Color(255, 255, 255, 255);
+            this.color = color ?? new Color(255, 255, 255);
             this.texture = texture ?? Game.blank;
             this.clickable = clickable;
         }

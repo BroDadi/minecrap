@@ -21,7 +21,7 @@ namespace minecrap.gui
             this.aspectRatio = aspectRatio;
             this.dominantAxis = dominantAxis;
             this.pivotPoint = pivotPoint ?? new Vector2(0.5f, 0.5f);
-            this.color = color ?? new Color(255, 255, 255, 255);
+            this.color = color ?? new Color(255, 255, 255);
             SetBlockType(blockType);
         }
 
@@ -129,11 +129,6 @@ namespace minecrap.gui
             ebo.Bind();
             GL.DrawElements(PrimitiveType.Triangles, 18, DrawElementsType.UnsignedInt, 0);
             base.OnRender(shaderProgram);
-        }
-
-        public override void OnClick()
-        {
-            Player.instance.GrabItem(blockType);
         }
     }
 }

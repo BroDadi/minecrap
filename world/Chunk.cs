@@ -34,7 +34,7 @@ namespace minecrap.world
         private Random rand;
         private HashSet<Block> blocksTicked;
 
-        public Chunk(Vector2i chunkPos)
+        public Chunk(Vector2i chunkPos, string path = "")
         {
             this.chunkPos = chunkPos;
             blockOffset = new Vector3i(chunkPos.X * World.chunkSize, 0, chunkPos.Y *  World.chunkSize);
@@ -51,8 +51,10 @@ namespace minecrap.world
             blocksTicked = new HashSet<Block>();
 
             chunkBlocks = new Block[World.chunkSize, World.height, World.chunkSize];
+            if (path == "") GenBlocks();
+            else LoadBlocks(path);
+
             chunkLighting = new byte[World.chunkSize, World.height, World.chunkSize];
-            GenBlocks();
             GenLighting();
         }
 
