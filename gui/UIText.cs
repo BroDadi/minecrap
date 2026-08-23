@@ -137,6 +137,10 @@ namespace minecrap.gui
             base.OnRender(shaderProgram);
         }
 
-        public void SetText(string text) => this.text = text;
+        public void SetText(string text) 
+        {
+            this.text = text;
+            GenElement();
+        }
     }
 }

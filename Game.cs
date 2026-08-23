@@ -18,14 +18,14 @@ namespace minecrap
         private Camera cam;
         private Player player;
         private World world;
-        private GUI gui;
-        private GUI pauseGUI;
+        private GUIManager gm;
         private UIBlock[] invBlocks;
         private UIImage select;
         private UIImage fullInv;
         private Vector3 skyColor;
         public bool inInventory;
         public bool paused;
+        public bool inWorldCreate;
         public static HashSet<BlockType> transparentBlocks =
         [
             BlockType.Water,
@@ -87,6 +87,9 @@ namespace minecrap
             BlockType.Planks,
             BlockType.Bricks,
         ];
+        private int[] worldSizes = { 4, 8, 16, 32, 64 };
+        private int sizeIndex = 2;
+        private string[] worldNames = { "tiny", "small", "normal", "big", "HUGE" };
 
         public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
@@ -101,8 +104,7 @@ namespace minecrap
             base.OnResize(e);
             GL.Viewport(0, 0, e.Width, e.Height);
             screenSize = new Vector2i(e.Width, e.Height);
-            gui?.RebuildGUI();
-            pauseGUI?.RebuildGUI();
+            gm?.RebuildAll();
         }
 
         protected override void OnLoad()
@@ -115,6 +117,7 @@ namespace minecrap
             font = new Texture("font");
             blank = new Texture("blank");
             btnTexture = new Texture("button");
+            gm = new GUIManager();
 
             world = new World(new Random().Next(int.MinValue, int.MaxValue), shaderProgram);
             Vector2i worldSize = new(16, 16);
@@ -127,7 +130,7 @@ namespace minecrap
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-            gui = new GUI();
+            GUI gui = new("gameGUI");
             
             UIImage image = new
             (
@@ -202,7 +205,7 @@ namespace minecrap
             gui.AddToGUI(fullInv);
             gui.AddToGUI(verText);
 
-            pauseGUI = new GUI();
+            GUI pauseGUI = new("pause");
             UIImage bg = new
             (
                 relSize: new Vector2(1f, 1f), offSize: Vector2.Zero,
@@ -261,12 +264,94 @@ namespace minecrap
                 }
             };
 
+            GUI worldCreateGUI = new("world");
+            UIImage bg2 = new
+            (
+                relSize: new Vector2(1f, 1f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.5f), offPos: Vector2.Zero,
+                color: new Color(0, 0, 0, 127)
+            );
+
+            UIButton worldBtn = new
+            (
+                relSize: new Vector2(0.35f, 0.09f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.3f), offPos: Vector2.Zero,
+                aspectRatio: 5f, dominantAxis: DomAxis.Height,
+                texture: btnTexture, text: "new world",
+                relTextSize: 0.4f
+            );
+            worldBtn.OnClick = () =>
+            {
+                pauseGUI.Disable();
+                worldCreateGUI.Enable();
+                inWorldCreate = true;
+            };
+
+            UIButton sizeToggle = new
+            (
+                relSize: new Vector2(0.35f, 0.09f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.6f), offPos: Vector2.Zero,
+                aspectRatio: 5f, dominantAxis: DomAxis.Height,
+                texture: btnTexture, text: $"world size: {worldNames[sizeIndex]}",
+                relTextSize: 0.25f
+            );
+            sizeToggle.OnClick = () =>
+            {
+                sizeIndex++;
+                if (sizeIndex >= worldSizes.Length) sizeIndex = 0;
+                sizeToggle.SetText($"world size: {worldNames[sizeIndex]}");
+            };
+
+            UIButton createBtn = new
+            (
+                relSize: new Vector2(0.35f, 0.09f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.5f), offPos: Vector2.Zero,
+                aspectRatio: 5f, dominantAxis: DomAxis.Height,
+                texture: btnTexture, text: "create world",
+                relTextSize: 0.4f
+            );
+            createBtn.OnClick = () =>
+            {
+                world = new World(new Random().Next(int.MinValue, int.MaxValue), shaderProgram);
+                Vector2i worldSize = new Vector2i(worldSizes[sizeIndex]);
+                world.GenerateWorld(worldSize);
+
+                Vector2i spawnPos = new(worldSize.X * 8, worldSize.Y * 8);
+                Vector3 playerPos = world.GetHighestBlock(spawnPos).pos + new Vector3(0, 1.5f, 0);
+                cam = new Camera(playerPos + new Vector3(0f, 0.5f, 0f));
+                player = new Player(playerPos);
+                
+                worldCreateGUI.Disable();
+                inWorldCreate = false;
+                paused = false;
+            };
+
+            UIButton cancelBtn = new
+            (
+                relSize: new Vector2(0.35f, 0.09f), offSize: Vector2.Zero,
+                relPos: new Vector2(0.5f, 0.4f), offPos: Vector2.Zero,
+                aspectRatio: 5f, dominantAxis: DomAxis.Height,
+                texture: btnTexture, text: "cancel",
+                relTextSize: 0.4f
+            );
+            cancelBtn.OnClick = () =>
+            {
+                worldCreateGUI.Disable();
+                pauseGUI.Enable();
+            };
+
+            worldCreateGUI.AddToGUI(bg2);
+            worldCreateGUI.AddToGUI(sizeToggle);
+            worldCreateGUI.AddToGUI(createBtn);
+            worldCreateGUI.AddToGUI(cancelBtn);
+            worldCreateGUI.Disable();
+
             pauseGUI.AddToGUI(bg);
             pauseGUI.AddToGUI(pauseText);
             pauseGUI.AddToGUI(resumeBtn);
             pauseGUI.AddToGUI(saveBtn);
             pauseGUI.AddToGUI(loadBtn);
-
+            pauseGUI.AddToGUI(worldBtn);
             pauseGUI.Disable();
 
             Vector2i spawnPos = new(worldSize.X * 8, worldSize.Y * 8);
@@ -308,8 +393,7 @@ namespace minecrap
             GL.UniformMatrix4(viewLocation, true, ref view);
             GL.UniformMatrix4(projectionLocation, true, ref projection);
 
-            gui.Render(shaderProgram);
-            pauseGUI.Render(shaderProgram);
+            gm.RenderAll(shaderProgram);
 
             GL.Enable(EnableCap.DepthTest);
 
@@ -326,8 +410,7 @@ namespace minecrap
             player.Update(input, mouse, args);
             world.Update(args);
 
-            if (inInventory && mouse.IsButtonPressed(MouseButton.Left)) gui.Click(new Vector2(mouse.Position.X, screenSize.Y - mouse.Position.Y));
-            if (paused && mouse.IsButtonPressed(MouseButton.Left)) pauseGUI.Click(new Vector2(mouse.Position.X, screenSize.Y - mouse.Position.Y));
+            if (mouse.IsButtonPressed(MouseButton.Left)) gm.Click(new Vector2(mouse.Position.X, screenSize.Y - mouse.Position.Y));
         }
 
         public void UpdateInvBlockType(int index, BlockType blockType) => invBlocks[index].SetBlockType(blockType);
@@ -344,6 +427,7 @@ namespace minecrap
 
         public void ToggleFullInv()
         {
+            if (paused) return;
             if (inInventory)
             {
                 LockCursor();
@@ -361,13 +445,22 @@ namespace minecrap
         {
             if (paused)
             {
-                LockCursor();
-                pauseGUI.Disable();
+                if (inWorldCreate)
+                {
+                    gm.GetGUI("world").Disable();
+                    gm.GetGUI("pause").Enable();
+                    inWorldCreate = false;
+                }
+                else
+                {
+                    LockCursor();
+                    gm.GetGUI("pause").Disable();
+                }
             }
             else
             {
                 UnlockCursor();
-                pauseGUI.Enable();
+                gm.GetGUI("pause").Enable();
             }
             paused = !paused;
         }

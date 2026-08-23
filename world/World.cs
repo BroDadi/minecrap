@@ -45,6 +45,11 @@ namespace minecrap.world
         {
             this.shaderProgram = shaderProgram;
             this.seed = seed;
+            ticks = 0;
+            updateSchedule?.Clear();
+            chunksToUpdate?.Clear();
+            timeAfterLastUpdate = 0;
+
             texture = Game.blocks;
             instance = this;
             updateSchedule = new PriorityQueue<Block, ulong>();
@@ -257,12 +262,13 @@ namespace minecrap.world
             if (pos.Z % chunkSize == chunkSize - 1 && chunk.chunkPos.Y != worldSize.Y - 1) chunksToUpdate.Add(chunks[chunkPos.X, chunkPos.Y + 1]);
         }
 
-        public Dictionary<Faces, Block?> GetNeighbors(Block block)
+        public Dictionary<Faces, Block> GetNeighbors(Block block)
         {
-            Dictionary<Faces, Block?> result = new();
+            Dictionary<Faces, Block> result = new();
             foreach (Faces face in neighborByFace.Keys)
             {
-                result[face] = GetNeighbor(block, face);
+                Block? neighbor = GetNeighbor(block, face);
+                if (neighbor != null) result[face] = (Block)neighbor;
             }
             return result;
         }
@@ -272,6 +278,7 @@ namespace minecrap.world
             if (face == Faces.Inside) return block;
             else return block + neighborByFace[face];
         }
+
         public Block? GetNeighbor(Block block, Faces face) => GetBlock(GetNeighborPos(block.pos, face));
         
         public List<Block> GetSolidBlocksAroundCollider(Collider collider)
@@ -355,7 +362,7 @@ namespace minecrap.world
                     chunksToUpdate.Clear();
                 }
 
-                foreach (Chunk chunk in chunks)
+                foreach (Chunk chunk in GetChunksAroundPlayer(8))
                 {
                     chunk.DoRandomTicks(randomTickBlocks);
                 }

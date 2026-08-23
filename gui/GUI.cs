@@ -6,10 +6,11 @@ namespace minecrap.gui
     internal class GUI
     {
         private List<UIElement> elements;
-        private bool enabled = true;
+        public bool enabled = true;
 
-        public GUI()
+        public GUI(string id)
         {
+            GUIManager.instance.AddToList(this, id);
             elements = new List<UIElement>();
         }
 
@@ -40,9 +41,9 @@ namespace minecrap.gui
             }
         }
 
-        public void Click(Vector2 cursor)
+        public bool Click(Vector2 cursor)
         {
-            if (!enabled) return;
+            if (!enabled) return false;
 
             foreach (UIElement element in elements)
             {
@@ -51,14 +52,17 @@ namespace minecrap.gui
                 if (clicked != null && clicked.OnClick != null)
                 {
                     clicked.OnClick();
-                    break;
+                    return true;
                 }
             }
+
+            return false;
         }
 
         private UIElement? ClickTraversal(UIElement element, Vector2 cursor)
         {
-            if (element.IsCursorOnElement(cursor)) return element;
+            if (!element.enabled) return null;
+            else if (element.IsCursorOnElement(cursor)) return element;
             else if (element.children != null)
             {
                 foreach (UIElement child in element.children)

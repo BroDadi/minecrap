@@ -438,8 +438,12 @@ namespace minecrap.world
             else
             {
                 Block? neighbor = World.instance.GetNeighbor(block, face);
-                return block != null && block.blockType != BlockType.Air && (neighbor == null || neighbor.blockType == BlockType.Air ||
-                    ((Game.transparentBlocks.Contains(neighbor.blockType) || Game.cutoutBlocks.Contains(neighbor.blockType)) && block.blockType != neighbor.blockType));
+                return block != null && block.blockType != BlockType.Air &&
+                    ((neighbor == null && face == Faces.Top) ||
+                    neighbor != null && (neighbor.blockType == BlockType.Air ||
+                    ((Game.transparentBlocks.Contains(neighbor.blockType) ||
+                    Game.cutoutBlocks.Contains(neighbor.blockType)) &&
+                    block.blockType != neighbor.blockType)));
             }
         }
 
