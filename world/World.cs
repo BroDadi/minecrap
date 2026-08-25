@@ -1,3 +1,4 @@
+using System.Numerics;
 using minecrap.graphics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -21,6 +22,7 @@ namespace minecrap.world
         private ulong ticks = 0;
         private PriorityQueue<Block, ulong> updateSchedule;
         private HashSet<Chunk> chunksToUpdate;
+        private Random rnd;
         public static FastNoiseLite heightNoise;
         public static FastNoiseLite dirtNoise;
         public static FastNoiseLite sandNoise;
@@ -45,6 +47,7 @@ namespace minecrap.world
         {
             this.shaderProgram = shaderProgram;
             this.seed = seed;
+            rnd = new Random(seed);
             ticks = 0;
             updateSchedule?.Clear();
             chunksToUpdate?.Clear();
@@ -139,6 +142,66 @@ namespace minecrap.world
                 {
                     chunks[x, z].GenFaces();
                     chunks[x, z].BuildChunk();
+                }
+            }
+
+            int trees = worldSize.X * worldSize.Y * 2;
+            for (int i = 0; i < trees; i++)
+            {
+                Vector3i? pos = GetHighestBlock(new Vector2i(rnd.Next(0, worldSize.X * 16), rnd.Next(0, worldSize.Y * 16)))?.pos;
+                if (pos != null) TryMakeTree((Vector3i)pos);
+            }
+        }
+
+        private void TryMakeTree(Vector3i pos)
+        {
+            Block? block = GetBlock(pos);
+            if (block != null && block.blockType == BlockType.Grass)
+            { 
+                int bottomY = block.pos.Y;
+                int height = rnd.Next(4, 8);
+
+                for (int i = 1; i <= height; i++)
+                {
+                    int y = bottomY + i;
+                    Block? checkedBlock = GetBlock(new Vector3i(pos.X, y, pos.Z));
+                    if (checkedBlock != null && checkedBlock.blockType != BlockType.Air) return;
+                }
+                for (int i = 1; i <= height + 1; i++)
+                {
+                    int y = bottomY + i;
+
+                    if (i == height - 1 || i == height - 2)
+                    {
+                        for (int x = pos.X - 2; x <= pos.X + 2; x++)
+                        {
+                            for (int z = pos.Y - 2; z <= pos.Y + 2; z++)
+                            {
+                                if (x == pos.X && z == pos.Y) SetBlock(new Vector3i(x, y, z), BlockType.Log);
+                                else SetBlock(new Vector3i(x, y, z), BlockType.Leaves);
+                            }
+                        }
+                    }
+                    else if (i == height)
+                    {
+                        for (int x = pos.X - 1; x <= pos.X + 1; x++)
+                        {
+                            for (int z = pos.Y - 1; z <= pos.Y + 1; z++)
+                            {
+                                if (x == pos.X && z == pos.Y) SetBlock(new Vector3i(x, y, z), BlockType.Log);
+                                else SetBlock(new Vector3i(x, y, z), BlockType.Leaves);
+                            }
+                        }
+                    }
+                    else if (i == height + 1)
+                    {
+                        SetBlock(new Vector3i(pos.X + 1, y, pos.Y), BlockType.Leaves);
+                        SetBlock(new Vector3i(pos.X - 1, y, pos.Y), BlockType.Leaves);
+                        SetBlock(new Vector3i(pos.X, y, pos.Y + 1), BlockType.Leaves);
+                        SetBlock(new Vector3i(pos.X, y, pos.Y - 1), BlockType.Leaves);
+                        SetBlock(new Vector3i(pos.X, y, pos.Y), BlockType.Leaves);
+                    }
+                    else SetBlock(new Vector3i(pos.X, y, pos.Y), BlockType.Log);
                 }
             }
         }

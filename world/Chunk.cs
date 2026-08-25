@@ -443,7 +443,8 @@ namespace minecrap.world
                     neighbor != null && (neighbor.blockType == BlockType.Air ||
                     ((Game.transparentBlocks.Contains(neighbor.blockType) ||
                     Game.cutoutBlocks.Contains(neighbor.blockType)) &&
-                    block.blockType != neighbor.blockType)));
+                    (block.blockType != neighbor.blockType ||
+                    block.blockType == BlockType.Leaves))));
             }
         }
 
