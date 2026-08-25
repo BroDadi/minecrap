@@ -74,19 +74,19 @@ namespace minecrap.world
             return heightMap;
         }
 
-        private int[,] GenDirt()
+        private int[,] GenDirt(float[,] heightMap)
         {
-            int[,] heightMap = new int[World.chunkSize, World.chunkSize];
+            int[,] dirtMap = new int[World.chunkSize, World.chunkSize];
 
             for (int x = 0; x < World.chunkSize; x++)
             {
                 for (int z = 0; z < World.chunkSize; z++)
                 {
-                    heightMap[x,z] = (int)Math.Round(3 + World.dirtNoise.GetNoise(x + blockOffset.X, z + blockOffset.Z) * 3);
+                    dirtMap[x, z] = (int)Math.Round(World.dirtNoise.GetNoise(x + blockOffset.X, z + blockOffset.Z) * 3 - ((heightMap[x, z] + 1) * 40 + 30 - World.seaLevel) / 4f + 5);
                 }
             }
 
-            return heightMap;
+            return dirtMap;
         }
 
         private float[,] GenSandMap()
@@ -146,7 +146,7 @@ namespace minecrap.world
         public void GenBlocks()
         {
             float[,] heightMap = GenHeights();
-            int[,] dirtMap = GenDirt();
+            int[,] dirtMap = GenDirt(heightMap);
             float[,] sandMap = GenSandMap();
             bool[,,] caveMap = GenCaveMap();
             bool[,,] coalMap = GenOreMap(World.coalNoise, 0.775f, 64);
@@ -158,7 +158,7 @@ namespace minecrap.world
             {
                 for (int z = 0; z < World.chunkSize; z++)
                 {
-                    int height = (int)((heightMap[x, z] + 1) * 40 + 32);
+                    int height = (int)((heightMap[x, z] + 1) * 40 + 30);
                     int dirtHeight = height - dirtMap[x, z];
                     for (int y = 0; y < World.height; y++)
                     {
@@ -177,7 +177,7 @@ namespace minecrap.world
                         }
                         else if (y < height)
                         {
-                            if (dirtHeight < World.seaLevel && y < World.seaLevel + 2)
+                            if (height < World.seaLevel + 2)
                             {
                                 if (sandMap[x, z] > -0.5f) type = BlockType.Sand;
                                 else type = BlockType.Dirt;
