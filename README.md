@@ -5,4 +5,7 @@ i'm tired of editing this file to list new features so it's just like old classi
 
 ## copyright stuff
 this project is not affiliated with mojang, microsoft and minecraft, and does not use any assets or code from minecraft.
+
 font in gui taken from https://int10h.org/oldschool-pc-fonts/
+
+everything else made by me
