@@ -136,6 +136,13 @@ namespace minecrap.world
                 }
             }
 
+            int trees = worldSize.X * worldSize.Y * 2;
+            for (int i = 0; i < trees; i++)
+            {
+                Block? block = GetHighestBlock(new Vector2i(rnd.Next(0, worldSize.X * 16), rnd.Next(0, worldSize.Y * 16)));
+                if (block != null) TryMakeTree(block.pos);
+            }
+
             for (int x = 0; x < worldSize.X; x++)
             {
                 for (int z = 0; z < worldSize.Y; z++)
@@ -144,13 +151,6 @@ namespace minecrap.world
                     chunks[x, z].BuildChunk();
                 }
             }
-
-            int trees = worldSize.X * worldSize.Y * 2;
-            for (int i = 0; i < trees; i++)
-            {
-                Vector3i? pos = GetHighestBlock(new Vector2i(rnd.Next(0, worldSize.X * 16), rnd.Next(0, worldSize.Y * 16)))?.pos;
-                if (pos != null) TryMakeTree((Vector3i)pos);
-            }
         }
 
         private void TryMakeTree(Vector3i pos)
@@ -158,50 +158,57 @@ namespace minecrap.world
             Block? block = GetBlock(pos);
             if (block != null && block.blockType == BlockType.Grass)
             { 
-                int bottomY = block.pos.Y;
                 int height = rnd.Next(4, 8);
 
-                for (int i = 1; i <= height; i++)
+                List<Block> blocks = GetBlocksInZone(pos + new Vector3i(0, height / 2, 0), new Vector3i(3, height, 3));
+                foreach (Block block1 in blocks)
                 {
-                    int y = bottomY + i;
-                    Block? checkedBlock = GetBlock(new Vector3i(pos.X, y, pos.Z));
-                    if (checkedBlock != null && checkedBlock.blockType != BlockType.Air) return;
+                    if (block1.blockType != BlockType.Air) return;
                 }
-                for (int i = 1; i <= height + 1; i++)
-                {
-                    int y = bottomY + i;
 
-                    if (i == height - 1 || i == height - 2)
+                for (int y = 1; y <= height + 1; y++)
+                {
+                    if (y == height - 1 || y == height - 2)
                     {
-                        for (int x = pos.X - 2; x <= pos.X + 2; x++)
+                        for (int x = -2; x <= 2; x++)
                         {
-                            for (int z = pos.Y - 2; z <= pos.Y + 2; z++)
+                            for (int z = -2; z <= 2; z++)
                             {
-                                if (x == pos.X && z == pos.Y) SetBlock(new Vector3i(x, y, z), BlockType.Log);
-                                else SetBlock(new Vector3i(x, y, z), BlockType.Leaves);
+                                Vector3i newPos = pos + new Vector3i(x, y, z);
+                                if (x == 0 && z == 0) SetBlock(newPos, BlockType.Log);
+                                else if (Math.Abs(x) == 2 && Math.Abs(z) == 2)
+                                {
+                                    if (rnd.Next(2) == 1) SetBlock(newPos, BlockType.Leaves);
+                                }
+                                else SetBlock(newPos, BlockType.Leaves);
                             }
                         }
                     }
-                    else if (i == height)
+                    else if (y == height)
                     {
-                        for (int x = pos.X - 1; x <= pos.X + 1; x++)
+                        for (int x = -1; x <= 1; x++)
                         {
-                            for (int z = pos.Y - 1; z <= pos.Y + 1; z++)
+                            for (int z = -1; z <= 1; z++)
                             {
-                                if (x == pos.X && z == pos.Y) SetBlock(new Vector3i(x, y, z), BlockType.Log);
-                                else SetBlock(new Vector3i(x, y, z), BlockType.Leaves);
+                                Vector3i newPos = pos + new Vector3i(x, y, z);
+                                if (x == 0 && z == 0) SetBlock(newPos, BlockType.Log);
+                                else if (Math.Abs(x) == 1 && Math.Abs(z) == 1)
+                                {
+                                    if (rnd.Next(2) == 1) SetBlock(newPos, BlockType.Leaves);
+                                }
+                                else SetBlock(newPos, BlockType.Leaves);
                             }
                         }
                     }
-                    else if (i == height + 1)
+                    else if (y == height + 1)
                     {
-                        SetBlock(new Vector3i(pos.X + 1, y, pos.Y), BlockType.Leaves);
-                        SetBlock(new Vector3i(pos.X - 1, y, pos.Y), BlockType.Leaves);
-                        SetBlock(new Vector3i(pos.X, y, pos.Y + 1), BlockType.Leaves);
-                        SetBlock(new Vector3i(pos.X, y, pos.Y - 1), BlockType.Leaves);
-                        SetBlock(new Vector3i(pos.X, y, pos.Y), BlockType.Leaves);
+                        SetBlock(pos + new Vector3i(1, y, 0), BlockType.Leaves);
+                        SetBlock(pos + new Vector3i(-1, y, 0), BlockType.Leaves);
+                        SetBlock(pos + new Vector3i(0, y, 1), BlockType.Leaves);
+                        SetBlock(pos + new Vector3i(0, y, -1), BlockType.Leaves);
+                        SetBlock(pos + new Vector3i(0, y, 0), BlockType.Leaves);
                     }
-                    else SetBlock(new Vector3i(pos.X, y, pos.Y), BlockType.Log);
+                    else SetBlock(pos + new Vector3i(0, y, 0), BlockType.Log);
                 }
             }
         }
