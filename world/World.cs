@@ -16,6 +16,7 @@ namespace minecrap.world
         public const int chunkSize = 16;
         public const int height = 128;
         public const int seaLevel = 64;
+        public string dir = "";
         private float timeAfterLastUpdate = 0f;
         private const float tick = 1/20f;
         private const int randomTickBlocks = 3;
@@ -122,6 +123,12 @@ namespace minecrap.world
             diamondNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
             diamondNoise.SetFractalOctaves(2);
             diamondNoise.SetFractalLacunarity(2f);
+        }
+
+        public World(string path, ShaderProgram shaderProgram)
+        {
+            this.shaderProgram = shaderProgram;
+            LoadWorld(path);
         }
 
         public void GenerateWorld(Vector2i worldSize)
@@ -234,17 +241,11 @@ namespace minecrap.world
 
         public void LoadWorld(string path)
         {
-            if (File.Exists(Path.Join(path, "data.txt")))
+            string dataPath = Path.Join(path, "data.txt");
+
+            if (File.Exists(dataPath))
             {
-                string[] dataFile = File.ReadAllLines(Path.Join(path, "data.txt"));
-                Dictionary<string, string> data = new();
-
-                foreach (string str in dataFile)
-                {
-                    string[] a = str.Split(": ");
-                    if (a.Length >= 2) data[a[0]] = a[1];
-                }
-
+                Dictionary<string, string> data = Game.DictFromFile(dataPath);
                 seed = Convert.ToInt32(data["seed"]);
                 ticks = Convert.ToUInt64(data["ticks"]);
                 timeAfterLastUpdate = Convert.ToSingle(data["timeAfterLastUpdate"]);

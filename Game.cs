@@ -26,6 +26,7 @@ namespace minecrap
         public bool inInventory;
         public bool paused;
         public bool inWorldCreate;
+        public string tempWorldPath = Path.Combine(Path.GetTempPath(), "temp world");
         public static HashSet<BlockType> transparentBlocks =
         [
             BlockType.Water,
@@ -239,7 +240,18 @@ namespace minecrap
             saveBtn.OnClick = () =>
             {
                 DialogResult result = Dialog.FolderPicker(Path.Combine(Environment.CurrentDirectory, "worlds"));
-                if (result.IsOk) World.instance.SaveWorld(result.Path);
+                if (result.IsOk)
+                {
+                    World.instance.SaveWorld(result.Path);
+                    
+                    string[] plrData =
+                    {
+                        $"posX: {player.pos.X}",
+                        $"posY: {player.pos.Y}",
+                        $"posZ: {player.pos.Z}",
+                    };
+                    File.WriteAllLines(Path.Join(result.Path, "plr.txt"), plrData);
+                }
                 TogglePause();
             };
 
@@ -257,8 +269,9 @@ namespace minecrap
                 if (result.IsOk)
                 {
                     world.LoadWorld(result.Path);
-                    Vector2i spawnPos = new(world.worldSize.X * 8, world.worldSize.Y * 8);
-                    Vector3 playerPos = world.GetHighestBlock(spawnPos).pos + new Vector3(0, 1.5f, 0);
+
+                    Dictionary<string, string> plrData = DictFromFile(Path.Join(result.Path, "plr.txt"));
+                    Vector3 playerPos = new(Convert.ToSingle(plrData["posX"]), Convert.ToSingle(plrData["posY"]), Convert.ToSingle(plrData["posZ"]));
                     cam = new Camera(playerPos + new Vector3(0f, 0.5f, 0f));
                     player = new Player(playerPos);
                 }
@@ -463,6 +476,19 @@ namespace minecrap
                 gm.GetGUI("pause").Enable();
             }
             paused = !paused;
+        }
+
+        public static Dictionary<string, string> DictFromFile(string path)
+        {
+            string[] dataFile = File.ReadAllLines(path);
+            Dictionary<string, string> data = new();
+
+            foreach (string str in dataFile)
+            {
+                string[] a = str.Split(": ");
+                if (a.Length >= 2) data[a[0]] = a[1];
+            }
+            return data;
         }
     }
 }

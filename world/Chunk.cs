@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using minecrap.graphics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
